@@ -1,1 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0e9ff;
+    --surface: #ffffff;
+    --coral: #FF6B6B;
+    --mint: #6BCB77;
+    --sky: #4D96FF;
+    --purple: #C77DFF;
+    --pink: #FF6EB4;
+    --dark: #2d2d2d;
+    --muted: #888;
+    --tab-h: 62px;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ======== PANEL ======== */
+  #panel {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .tab-pane {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .tab-pane.active { display: flex; }
+
+  .pane-strip { flex-shrink: 0; height: 4px; }
+  .strip-purple { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+  .strip-sky    { background: linear-gradient(90deg, var(--sky), var(--mint)); }
+  .strip-coral  { background: var(--coral); }
+
+  .pane-header {
+    flex-shrink: 0;
+    padding: 14px 18px 10px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1.5px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pane-header h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: var(--dark);
+  }
+  .pane-header h2.grad-purple {
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .pane-meta {
+    font-size: 0.62rem; color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-left: auto;
+  }
+
+  .pane-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ======== SUTTA ======== */
+  #sutta-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--purple);
+    margin-bottom: 12px;
+  }
+  #sutta-text {
+    font-size: 0.9rem;
+    line-height: 1.85;
+    color: #3a3a3a;
+    white-space: pre-wrap;
+  }
+  #sutta-link {
+    display: inline-block;
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: white;
+    border-radius: 12px;
+    padding: 9px 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  #sutta-loading-msg { color: var(--muted); font-size: 0.9rem; }
+
+  /* ======== TALK ======== */
+  #talk-player-wrap {
+    background: linear-gradient(135deg, #e8f4ff, #f0fff4);
+    border-radius: 16px;
+    padding: 18px;
+    border: 1.5px solid rgba(77,150,255,0.15);
+    margin-bottom: 20px;
+  }
+  #talk-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.05rem;
+    color: var(--sky);
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  #talk-date {
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
+  }
+  #talk-audio { width: 100%; border-radius: 10px; accent-color: var(--sky); }
+  #talk-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--sky);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .talk-nav { display: flex; gap: 8px; margin-top: 14px; }
+  .talk-nav button {
+    flex: 1;
+    background: white;
+    border: 1.5px solid #dde8ff;
+    border-radius: 10px;
+    padding: 10px 8px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--sky);
+  }
+  #talk-loading { color: var(--muted); font-size: 0.9rem; }
+  #talk-error { font-size: 0.78rem; color: var(--coral); background: #fff0f0; padding: 10px; border-radius: 10px; }
+
+  #talk-archive { margin-top: 20px; border-top: 1.5px solid rgba(0,0,0,0.06); padding-top: 14px; }
+  #talk-archive h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .archive-item {
+    padding: 9px 0;
+    border-bottom: 1.5px solid rgba(0,0,0,0.05);
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+  }
+  .archive-item:last-child { border-bottom: none; }
+  .archive-play {
+    flex-shrink: 0; width: 28px; height: 28px;
+    background: var(--sky); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: white;
+  }
+  .archive-title { font-size: 0.84rem; font-weight: 700; color: var(--dark); line-height: 1.3; }
+  .archive-date  { font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+
+  /* ======== NEWS ======== */
+  .feed-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .feed-btn {
+    background: #f0f0f0; border: 2px solid transparent; border-radius: 20px;
+    padding: 5px 13px; font-size: 0.74rem; font-weight: 700; cursor: pointer;
+    font-family: 'Nunito', sans-serif; color: #555;
+  }
+  .feed-btn.active { background: var(--coral); color: white; border-color: var(--coral); }
+  .news-item { padding: 11px 0; border-bottom: 1.5px solid rgba(0,0,0,0.06); }
+  .news-item:last-child { border-bottom: none; }
+  .news-item a {
+    font-size: 0.88rem; font-weight: 700; color: var(--dark);
+    text-decoration: none; line-height: 1.45; display: block;
+  }
+  .news-meta { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+  .news-source-badge {
+    display: inline-block; background: var(--coral); color: white;
+    border-radius: 6px; padding: 1px 7px; font-size: 0.63rem; font-weight: 700; margin-right: 4px;
+  }
+  .news-loading { color: var(--muted); font-size: 0.85rem; padding: 14px 0; }
+  .news-error { font-size: 0.75rem; color: var(--coral); padding: 8px; background: #fff0f0; border-radius: 8px; }
+
+  /* ======== TAB BAR ======== */
+  #tab-bar {
+    flex-shrink: 0;
+    display: flex;
+    height: var(--tab-h);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(14px);
+    border-top: 1.5px solid rgba(0,0,0,0.07);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    gap: 3px;
+    padding-bottom: 4px;
+    transition: color 0.15s;
+    position: relative;
+  }
+  .tab-btn .tab-icon { font-size: 1.45rem; line-height: 1; }
+  .tab-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .tab-btn.active { color: var(--purple); }
+  .tab-btn.active::after { background: var(--purple); }
+  .tab-btn:nth-child(2).active { color: var(--sky); }
+  .tab-btn:nth-child(2).active::after { background: var(--sky); }
+  .tab-btn:nth-child(3).active { color: var(--coral); }
+  .tab-btn:nth-child(3).active::after { background: var(--coral); }
+</style>
+</head>
+<body>
+
+<div id="panel">
+
+  <!-- PANE 1: SUTTA -->
+  <div class="tab-pane active" id="pane-sutta">
+    <div class="pane-strip strip-purple"></div>
+    <div class="pane-header">
+      <h2 class="grad-purple">🪷 Daily Sutta</h2>
+      <span class="pane-meta" id="sutta-uid">Loading...</span>
+    </div>
+    <div class="pane-body">
+      <div id="sutta-loading-msg">⏳ Loading today's sutta...</div>
+      <div id="sutta-content" style="display:none">
+        <div id="sutta-name"></div>
+        <div id="sutta-text"></div>
+        <a id="sutta-link" href="#" target="_blank" rel="noopener">Read in full on SuttaCentral ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANE 2: TALK -->
+  <div class="tab-pane" id="pane-talk">
+    <div class="pane-strip strip-sky"></div>
+    <div class="pane-header">
+      <h2>🎙️ Morning Talk</h2>
+      <span class="pane-meta">Thanissaro Bhikkhu</span>
+    </div>
+    <div class="pane-body">
+      <div id="talk-loading">⏳ Loading today's talk...</div>
+      <div id="talk-error" style="display:none"></div>
+      <div id="talk-player-wrap" style="display:none">
+        <div id="talk-title"></div>
+        <div id="talk-date"></div>
+        <audio id="talk-audio" controls preload="none"></audio>
+        <br>
+        <a id="talk-link" href="https://www.dhammatalks.org/audio/morning/" target="_blank" rel="noopener">Browse all talks ↗</a>
+        <div class="talk-nav">
+          <button onclick="prevTalk()">← Prev</button>
+          <button onclick="randomTalk()">🔀 Random</button>
+          <button onclick="nextTalk()">Next →</button>
+        </div>
+      </div>
+      <div id="talk-archive" style="display:none">
+        <h3>More from this archive</h3>
+        <div id="talk-archive-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANE 3: NEWS -->
+  <div class="tab-pane" id="pane-news">
+    <div class="pane-strip strip-coral"></div>
+    <div class="pane-header">
+      <h2>📰 News</h2>
+    </div>
+    <div class="pane-body">
+      <div class="feed-selector" id="feed-selector"></div>
+      <div id="news-list"><div class="news-loading">Loading feed...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('sutta',this)">
+    <span class="tab-icon">🪷</span>Sutta
+  </button>
+  <button class="tab-btn" onclick="switchTab('talk',this)">
+    <span class="tab-icon">🎙️</span>Talk
+  </button>
+  <button class="tab-btn" onclick="switchTab('news',this)">
+    <span class="tab-icon">📰</span>News
+  </button>
+</div>
+
+<script>
+// ============================================================
+//  TABS
+// ============================================================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ============================================================
+//  MORNING TALK
+// ============================================================
+let allTalks = [];
+let talkIndex = 0;
+
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+function todaySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+
+async function fetchTalkArchive() {
+  const url = 'https://www.dhammatalks.org/audio/morning/';
+  const proxies = [
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  ];
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(url), {signal: AbortSignal.timeout(10000)});
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.length < 500) continue;
+      return html;
+    } catch(e) {}
+  }
+  throw new Error('Could not fetch talk archive');
+}
+
+function parseTalks(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const talks = [];
+  doc.querySelectorAll('a[href$=".mp3"]').forEach(a => {
+    const mp3 = a.href.startsWith('http') ? a.href : 'https://www.dhammatalks.org' + a.getAttribute('href');
+    const li = a.closest('li');
+    let title = 'Unknown Talk', dateStr = '';
+    if (li) {
+      const titleLink = li.querySelector('a:not([href$=".mp3"])');
+      if (titleLink) title = titleLink.textContent.trim();
+      const match = mp3.match(/\/(\d{6})\(/);
+      if (match) {
+        const code = match[1];
+        dateStr = new Date(2000 + parseInt(code.slice(0,2)), parseInt(code.slice(2,4))-1, parseInt(code.slice(4,6)))
+          .toLocaleDateString([], {year:'numeric', month:'long', day:'numeric'});
+      }
+    }
+    talks.push({title, mp3, dateStr});
+  });
+  return talks;
+}
+
+function renderTalk(idx) {
+  const talk = allTalks[idx];
+  if (!talk) return;
+  talkIndex = idx;
+  document.getElementById('talk-title').textContent = talk.title;
+  document.getElementById('talk-date').textContent = talk.dateStr || '';
+  const audio = document.getElementById('talk-audio');
+  audio.src = talk.mp3;
+  audio.load();
+  document.getElementById('talk-loading').style.display = 'none';
+  document.getElementById('talk-player-wrap').style.display = 'block';
+  const nearby = allTalks.slice(Math.max(0, idx-2), idx+8).filter(t => t !== talk);
+  document.getElementById('talk-archive-list').innerHTML = nearby.map(t => {
+    const realIdx = allTalks.indexOf(t);
+    return `<div class="archive-item" onclick="renderTalk(${realIdx})">
+      <div class="archive-play">▶</div>
+      <div>
+        <div class="archive-title">${t.title}</div>
+        <div class="archive-date">${t.dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('talk-archive').style.display = nearby.length ? 'block' : 'none';
+}
+
+function prevTalk()   { if (talkIndex > 0) renderTalk(talkIndex - 1); }
+function nextTalk()   { if (talkIndex < allTalks.length - 1) renderTalk(talkIndex + 1); }
+function randomTalk() { renderTalk(Math.floor(Math.random() * allTalks.length)); }
+
+async function initTalks() {
+  try {
+    const html = await fetchTalkArchive();
+    allTalks = parseTalks(html);
+    if (!allTalks.length) throw new Error('No talks found');
+    const rand = seededRand(todaySeed());
+    renderTalk(Math.floor(rand() * allTalks.length));
+  } catch(e) {
+    document.getElementById('talk-loading').style.display = 'none';
+    const err = document.getElementById('talk-error');
+    err.style.display = 'block';
+    err.textContent = '⚠️ Could not load talks. Check your connection or visit dhammatalks.org directly.';
+  }
+}
+initTalks();
+
+// ============================================================
+//  NEWS
+// ============================================================
+const RSS_FEEDS = {
+  'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
+  'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
+  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
+  'News.com.au': 'https://www.news.com.au/content-feeds/latest-news-national/',
+  'Politico':    'https://rss.politico.com/politics-news.xml',
+  'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
+};
+const PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+];
+let activeFeed = 'Guardian AU';
+
+function buildFeedSelector() {
+  const sel = document.getElementById('feed-selector');
+  sel.innerHTML = '';
+  Object.keys(RSS_FEEDS).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'feed-btn' + (name === activeFeed ? ' active' : '');
+    btn.textContent = name;
+    btn.onclick = () => { activeFeed = name; buildFeedSelector(); loadFeed(); };
+    sel.appendChild(btn);
+  });
+}
+
+async function fetchWithFallback(url) {
+  for (const makeProxy of PROXIES) {
+    try {
+      const res = await fetch(makeProxy(url), {signal: AbortSignal.timeout(7000)});
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text && text.trim().length > 100) return text;
+    } catch(e) {}
+  }
+  throw new Error('All proxies failed');
+}
+
+async function loadFeed() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '<div class="news-loading">⏳ Fetching...</div>';
+  try {
+    const data = await fetchWithFallback(RSS_FEEDS[activeFeed]);
+    const xml = new DOMParser().parseFromString(data, 'application/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0, 20);
+    if (!items.length) throw new Error('No items');
+    list.innerHTML = items.map(item => {
+      const title = item.querySelector('title')?.textContent?.trim() || 'Untitled';
+      const linkEl = item.querySelector('link');
+      let link = '#';
+      if (linkEl) {
+        const tc = linkEl.textContent?.trim();
+        const ns = linkEl.nextSibling?.nodeValue?.trim();
+        link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
+      }
+      const pub  = item.querySelector('pubDate')?.textContent || '';
+      const date = pub ? new Date(pub).toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+      return `<div class="news-item">
+        <a href="${link}" target="_blank" rel="noopener">${title}</a>
+        <div class="news-meta"><span class="news-source-badge">${activeFeed}</span>${date}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="news-error">⚠️ Could not load feed. Try another source or check your connection.</div>`;
+  }
+}
+buildFeedSelector();
+loadFeed();
+
+// ============================================================
+//  DAILY SUTTA
+// ============================================================
+const SUTTAS = [
+  {uid:'mn1',     name:'The Root of All Things'},
+  {uid:'mn2',     name:'All the Taints'},
+  {uid:'mn8',     name:'Expunging'},
+  {uid:'mn10',    name:'Mindfulness Meditation'},
+  {uid:'sn22.59', name:'The Five Aggregates'},
+  {uid:'sn35.28', name:'The Fire Sermon'},
+  {uid:'dn2',     name:'The Fruits of the Ascetic Life'},
+  {uid:'dn9',     name:'With Poṭṭhapāda'},
+  {uid:'an4.41',  name:'Conduct'},
+  {uid:'an8.53',  name:'With Dīghajāṇu'},
+  {uid:'dhp1-20', name:'Dhammapada: Pairs'},
+  {uid:'snp1.1',  name:'The Rhinoceros Horn'},
+  {uid:'snp4.15', name:'The Way to the Beyond'},
+  {uid:'ud3.10',  name:'About Lohicca'},
+  {uid:'mn118',   name:'Mindfulness of Breathing'},
+];
+
+async function loadDailySutta() {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const sutta = SUTTAS[dayOfYear % SUTTAS.length];
+  document.getElementById('sutta-uid').textContent = sutta.uid.toUpperCase() + ' · Sujato';
+  try {
+    const proxy = `https://corsproxy.io/?url=${encodeURIComponent(`https://suttacentral.net/api/bilarasuttas/${sutta.uid}/sujato`)}`;
+    const data = await (await fetch(proxy, {signal: AbortSignal.timeout(12000)})).json();
+    const order = data.keys_order || [];
+    const trans = data.translation_text || {};
+    const text = order.map(k => trans[k] || '').join('\n\n').trim();
+    document.getElementById('sutta-loading-msg').style.display = 'none';
+    document.getElementById('sutta-content').style.display = 'block';
+    document.getElementById('sutta-name').textContent = sutta.name;
+    document.getElementById('sutta-text').textContent = text;
+    document.getElementById('sutta-link').href = `https://suttacentral.net/${sutta.uid}/en/sujato`;
+  } catch(e) {
+    document.getElementById('sutta-loading-msg').textContent = '⚠️ Could not load sutta. Check your connection.';
+  }
+}
+loadDailySutta();
+</script>
+</body>
+</html>
