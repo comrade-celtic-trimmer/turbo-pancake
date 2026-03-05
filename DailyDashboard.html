@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0e9ff;
+    --surface: #ffffff;
+    --yellow: #FFD93D;
+    --coral: #FF6B6B;
+    --mint: #6BCB77;
+    --sky: #4D96FF;
+    --purple: #C77DFF;
+    --orange: #FF9A3C;
+    --pink: #FF6EB4;
+    --dark: #2d2d2d;
+    --muted: #888;
+    --radius: 18px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.09);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 20%, #ffd6e740 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, #d6e4ff40 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, #e8f5e940 0%, transparent 60%);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ======== TOPBAR ======== */
+  #topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    height: 62px;
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(14px);
+    border-bottom: 2px solid rgba(0,0,0,0.06);
+    gap: 16px;
+    z-index: 100;
+  }
+
+  #topbar h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    background: linear-gradient(90deg, var(--coral), var(--purple), var(--sky));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #clock-block {
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+  #clock-main {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--dark);
+  }
+  #date-main { font-size: 0.66rem; color: var(--muted); font-weight: 700; }
+
+  #topbar-weather {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.65);
+    border: 1.5px solid rgba(0,0,0,0.08);
+    border-radius: 50px;
+    padding: 4px 14px 4px 9px;
+    white-space: nowrap;
+  }
+  #topbar-weather .tw-icon { font-size: 1.3rem; line-height: 1; }
+  .tw-temp { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--dark); }
+  .tw-desc { font-size: 0.68rem; color: var(--muted); font-weight: 700; }
+  .tw-city { font-size: 0.6rem; color: var(--muted); font-weight: 600; }
+
+  #topbar-spacer { flex: 1; }
+
+  #topbar-countdown {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #fff4e6, #fff0fc);
+    border: 1.5px solid #ffe0cc;
+    border-radius: 50px;
+    padding: 5px 18px;
+  }
+  .tc-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.8rem;
+    color: var(--orange);
+  }
+  .tc-units { display: flex; gap: 6px; align-items: center; }
+  .tc-unit { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+  .tc-num { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--dark); }
+  .tc-lbl { font-size: 0.5rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .tc-sep { font-family: 'Fredoka One', cursive; font-size: 0.85rem; color: #ccc; margin-bottom: 6px; }
+
+  /* ======== 3-COLUMN LAYOUT ======== */
+  #columns {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-right: 2px solid rgba(0,0,0,0.06);
+  }
+  .col:last-child { border-right: none; }
+
+  /* colour accent strip at top of each col */
+  .col-strip {
+    flex-shrink: 0;
+    height: 5px;
+  }
+  .strip-purple { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+  .strip-mint   { background: var(--mint); }
+  .strip-coral  { background: var(--coral); }
+
+  .col-header {
+    flex-shrink: 0;
+    padding: 14px 20px 10px;
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+    background: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .col-header h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--dark);
+  }
+  .col-header h2.grad-purple {
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .col-meta {
+    font-size: 0.66rem; color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-left: auto;
+  }
+
+  .col-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 24px;
+    background: rgba(255,255,255,0.35);
+  }
+  .col-body::-webkit-scrollbar { width: 5px; }
+  .col-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+
+  /* ======== SUTTA COL ======== */
+  #sutta-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--purple);
+    margin-bottom: 12px;
+  }
+  #sutta-text {
+    font-size: 0.875rem;
+    line-height: 1.8;
+    color: #3a3a3a;
+    white-space: pre-wrap;
+  }
+  #sutta-link {
+    display: inline-block;
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: white;
+    border-radius: 12px;
+    padding: 7px 18px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  #sutta-link:hover { opacity: 0.82; }
+  #sutta-loading-msg { color: var(--muted); font-size: 0.9rem; }
+
+  /* ======== TALK COL ======== */
+  .strip-sky { background: linear-gradient(90deg, var(--sky), var(--mint)); }
+
+  #talk-player-wrap {
+    background: linear-gradient(135deg, #e8f4ff, #f0fff4);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1.5px solid rgba(77,150,255,0.15);
+    margin-bottom: 20px;
+  }
+  #talk-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.15rem;
+    color: var(--sky);
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  #talk-date {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 14px;
+  }
+  #talk-audio {
+    width: 100%;
+    border-radius: 10px;
+    accent-color: var(--sky);
+  }
+  #talk-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--sky);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  #talk-link:hover { text-decoration: underline; }
+
+  .talk-nav {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .talk-nav button {
+    flex: 1;
+    background: white;
+    border: 1.5px solid #dde8ff;
+    border-radius: 10px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--sky);
+    transition: background 0.15s;
+  }
+  .talk-nav button:hover { background: #e8f4ff; }
+
+  #talk-loading { color: var(--muted); font-size: 0.9rem; }
+  #talk-error { font-size: 0.78rem; color: var(--coral); background: #fff0f0; padding: 10px; border-radius: 10px; }
+
+  #talk-archive {
+    margin-top: 20px;
+    border-top: 1.5px solid rgba(0,0,0,0.06);
+    padding-top: 16px;
+  }
+  #talk-archive h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .archive-item {
+    padding: 7px 0;
+    border-bottom: 1.5px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .archive-item:last-child { border-bottom: none; }
+  .archive-item:hover .archive-title { color: var(--sky); }
+  .archive-play {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    background: var(--sky);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem;
+    color: white;
+  }
+  .archive-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.3;
+    transition: color 0.15s;
+  }
+  .archive-date { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
+
+  /* ======== NEWS COL ======== */
+  .feed-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .feed-btn {
+    background: #f0f0f0; border: 2px solid transparent; border-radius: 20px;
+    padding: 4px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+    font-family: 'Nunito', sans-serif; color: #555; transition: all 0.15s;
+  }
+  .feed-btn.active { background: var(--coral); color: white; border-color: var(--coral); }
+  .news-item {
+    padding: 9px 0;
+    border-bottom: 1.5px solid rgba(0,0,0,0.06);
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item a {
+    font-size: 0.83rem; font-weight: 700; color: var(--dark);
+    text-decoration: none; line-height: 1.4; display: block;
+  }
+  .news-item a:hover { color: var(--coral); }
+  .news-meta { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+  .news-source-badge {
+    display: inline-block; background: var(--coral); color: white;
+    border-radius: 6px; padding: 1px 7px; font-size: 0.63rem; font-weight: 700; margin-right: 4px;
+  }
+  .news-loading { color: var(--muted); font-size: 0.85rem; padding: 14px 0; }
+  .news-error { font-size: 0.75rem; color: var(--coral); padding: 8px; background: #fff0f0; border-radius: 8px; }
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <h1>✨ My Dashboard</h1>
+
+  <div id="clock-block">
+    <div id="clock-main">00:00:00</div>
+    <div id="date-main">Loading...</div>
+  </div>
+
+  <div id="topbar-weather">
+    <span class="tw-icon" id="tw-icon">⏳</span>
+    <div>
+      <div style="display:flex;align-items:baseline;gap:5px;">
+        <span class="tw-temp" id="tw-temp">--°</span>
+        <span class="tw-desc" id="tw-desc">Loading</span>
+      </div>
+      <div class="tw-city" id="tw-city">📍 Locating...</div>
+    </div>
+  </div>
+
+  <div id="topbar-spacer"></div>
+
+  <div id="topbar-countdown">
+    <span class="tc-label">🎓 Finish UOW</span>
+    <div class="tc-units">
+      <div class="tc-unit"><span class="tc-num" id="tc-days">--</span><span class="tc-lbl">days</span></div>
+      <span class="tc-sep">:</span>
+      <div class="tc-unit"><span class="tc-num" id="tc-hrs">--</span><span class="tc-lbl">hrs</span></div>
+      <span class="tc-sep">:</span>
+      <div class="tc-unit"><span class="tc-num" id="tc-mins">--</span><span class="tc-lbl">min</span></div>
+      <span class="tc-sep">:</span>
+      <div class="tc-unit"><span class="tc-num" id="tc-secs">--</span><span class="tc-lbl">sec</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3-COLUMN BODY -->
+<div id="columns">
+
+  <!-- COL 1: SUTTA -->
+  <div class="col">
+    <div class="col-strip strip-purple"></div>
+    <div class="col-header">
+      <h2 class="grad-purple">🪷 Daily Sutta</h2>
+      <span class="col-meta" id="sutta-uid">Loading...</span>
+    </div>
+    <div class="col-body">
+      <div id="sutta-loading-msg">⏳ Loading today's sutta...</div>
+      <div id="sutta-content" style="display:none">
+        <div id="sutta-name"></div>
+        <div id="sutta-text"></div>
+        <a id="sutta-link" href="#" target="_blank" rel="noopener">Read in full on SuttaCentral ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- COL 2: DAILY TALK -->
+  <div class="col">
+    <div class="col-strip strip-sky"></div>
+    <div class="col-header">
+      <h2>🎙️ Morning Talk</h2>
+      <span class="col-meta">Thanissaro Bhikkhu</span>
+    </div>
+    <div class="col-body">
+      <div id="talk-loading">⏳ Loading today's talk...</div>
+      <div id="talk-error" style="display:none"></div>
+      <div id="talk-player-wrap" style="display:none">
+        <div id="talk-title"></div>
+        <div id="talk-date"></div>
+        <audio id="talk-audio" controls preload="none"></audio>
+        <br>
+        <a id="talk-link" href="https://www.dhammatalks.org/audio/" target="_blank" rel="noopener">Browse all talks ↗</a>
+        <div class="talk-nav">
+          <button onclick="prevTalk()">← Previous</button>
+          <button onclick="randomTalk()">🔀 Random</button>
+          <button onclick="nextTalk()">Next →</button>
+        </div>
+      </div>
+      <div id="talk-archive" style="display:none">
+        <h3>More from today's archive</h3>
+        <div id="talk-archive-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COL 3: NEWS -->
+  <div class="col">
+    <div class="col-strip strip-coral"></div>
+    <div class="col-header">
+      <h2>📰 News</h2>
+    </div>
+    <div class="col-body">
+      <div class="feed-selector" id="feed-selector"></div>
+      <div id="news-list"><div class="news-loading">Loading feed...</div></div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-main').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  document.getElementById('date-main').textContent =
+    now.toLocaleDateString([], {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+//  UOW COUNTDOWN — May 8 2026
+// ============================================================
+const UOW_TARGET = new Date('2026-05-08T23:59:00');
+function updateCountdown() {
+  const diff = UOW_TARGET - new Date();
+  if (diff <= 0) {
+    document.getElementById('tc-days').textContent = '🎉';
+    ['tc-hrs','tc-mins','tc-secs'].forEach(id => document.getElementById(id).textContent = '00');
+    return;
+  }
+  document.getElementById('tc-days').textContent = Math.floor(diff / 86400000);
+  document.getElementById('tc-hrs').textContent  = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
+  document.getElementById('tc-mins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+  document.getElementById('tc-secs').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,'0');
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// ============================================================
+//  WEATHER (topbar, geolocation)
+// ============================================================
+const WMO_ICON = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌦️',81:'🌧️',82:'🌧️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WMO_DESC = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+
+async function fetchWeather(lat, lon, city) {
+  try {
+    const d = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`)).json();
+    const c = d.current;
+    document.getElementById('tw-icon').textContent = WMO_ICON[c.weather_code] || '🌡️';
+    document.getElementById('tw-temp').textContent = Math.round(c.temperature_2m) + '°C';
+    document.getElementById('tw-desc').textContent = WMO_DESC[c.weather_code] || '';
+    document.getElementById('tw-city').textContent = '📍 ' + city;
+  } catch(e) { document.getElementById('tw-desc').textContent = 'Unavailable'; }
+}
+
+async function reverseGeocode(lat, lon) {
+  try {
+    const d = await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)).json();
+    return d.address?.city || d.address?.town || d.address?.suburb || 'Your location';
+  } catch(e) { return 'Your location'; }
+}
+
+function initWeather() {
+  if (!navigator.geolocation) { fetchWeather(-34.4278, 150.8931, 'Wollongong'); return; }
+  navigator.geolocation.getCurrentPosition(
+    async p => fetchWeather(p.coords.latitude, p.coords.longitude, await reverseGeocode(p.coords.latitude, p.coords.longitude)),
+    () => fetchWeather(-34.4278, 150.8931, 'Wollongong')
+  );
+}
+initWeather();
+setInterval(initWeather, 600000);
+
+// ============================================================
+//  DHAMMATALKS AUDIO
+//  Fetches dhammatalks.org/audio/ index via proxy, discovers
+//  all audio sub-pages, collects MP3s from across the site,
+//  picks one seeded by today's date with prev/next/random nav.
+// ============================================================
+let allTalks = [];   // [{title, mp3, dateStr}]
+let talkIndex = 0;
+
+// Seeded "random" — same sequence each day, different each day
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function todaySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+
+const TALK_PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+
+async function fetchPage(url) {
+  for (const makeProxy of TALK_PROXIES) {
+    try {
+      const res = await fetch(makeProxy(url), {signal: AbortSignal.timeout(12000)});
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.length < 200) continue;
+      return html;
+    } catch(e) {}
+  }
+  return null;
+}
+
+function extractMp3s(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const talks = [];
+  doc.querySelectorAll('a[href$=".mp3"]').forEach(a => {
+    const raw = a.getAttribute('href');
+    const mp3 = raw.startsWith('http') ? raw : 'https://www.dhammatalks.org/' + raw.replace(/^\//, '');
+    const container = a.closest('li') || a.closest('tr') || a.parentElement;
+    let title = a.textContent.trim() || 'Unknown Talk';
+    let dateStr = '';
+    if (container) {
+      const titleLink = container.querySelector('a:not([href$=".mp3"])');
+      if (titleLink && titleLink.textContent.trim()) title = titleLink.textContent.trim();
+      const match = mp3.match(/\/(\d{6})[\(\-]/);
+      if (match) {
+        const code = match[1];
+        const yr = 2000 + parseInt(code.slice(0,2));
+        const mo = parseInt(code.slice(2,4));
+        const dy = parseInt(code.slice(4,6));
+        if (mo >= 1 && mo <= 12 && dy >= 1 && dy <= 31)
+          dateStr = new Date(yr, mo-1, dy).toLocaleDateString([], {year:'numeric', month:'long', day:'numeric'});
+      }
+    }
+    talks.push({title, mp3, dateStr});
+  });
+  return talks;
+}
+
+function findAudioSubPages(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const urls = new Set();
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href || href.endsWith('.mp3') || href.endsWith('.pdf')) return;
+    if (href.match(/dhammatalks\.org\/audio\//i) || href.match(/^\/audio\//i)) {
+      const full = href.startsWith('http') ? href : 'https://www.dhammatalks.org' + (href.startsWith('/') ? href : '/' + href);
+      urls.add(full.split('?')[0].split('#')[0]);
+    }
+  });
+  return [...urls];
+}
+
+async function fetchAllTalks() {
+  const indexUrl = 'https://www.dhammatalks.org/audio/';
+  const indexHtml = await fetchPage(indexUrl);
+  if (!indexHtml) throw new Error('Could not fetch audio index');
+
+  // Collect MP3s directly on the index page
+  let collected = extractMp3s(indexHtml);
+
+  // Discover sub-pages and fetch them in parallel (cap to avoid excess requests)
+  const subPages = [...new Set([
+    ...findAudioSubPages(indexHtml),
+    'https://www.dhammatalks.org/audio/morning/',
+  ])].slice(0, 30);
+
+  const results = await Promise.allSettled(subPages.map(u => fetchPage(u)));
+  results.forEach(r => {
+    if (r.status === 'fulfilled' && r.value) collected.push(...extractMp3s(r.value));
+  });
+
+  // Deduplicate by mp3 URL
+  const seen = new Set();
+  return collected.filter(t => {
+    if (seen.has(t.mp3)) return false;
+    seen.add(t.mp3);
+    return true;
+  });
+}
+
+function renderTalk(idx) {
+  const talk = allTalks[idx];
+  if (!talk) return;
+  talkIndex = idx;
+  document.getElementById('talk-title').textContent = talk.title;
+  document.getElementById('talk-date').textContent = talk.dateStr || '';
+  const audio = document.getElementById('talk-audio');
+  audio.src = talk.mp3;
+  audio.load();
+  document.getElementById('talk-loading').style.display = 'none';
+  document.getElementById('talk-player-wrap').style.display = 'block';
+
+  // Show a handful of nearby talks in the archive list
+  const archiveList = document.getElementById('talk-archive-list');
+  const nearby = allTalks.slice(Math.max(0, idx-2), idx+8).filter((_,i,a) => a[i] !== talk);
+  archiveList.innerHTML = nearby.map((t, i) => {
+    const realIdx = allTalks.indexOf(t);
+    return `<div class="archive-item" onclick="renderTalk(${realIdx})">
+      <div class="archive-play">▶</div>
+      <div>
+        <div class="archive-title">${t.title}</div>
+        <div class="archive-date">${t.dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('talk-archive').style.display = nearby.length ? 'block' : 'none';
+}
+
+function prevTalk() { if (talkIndex > 0) renderTalk(talkIndex - 1); }
+function nextTalk() { if (talkIndex < allTalks.length - 1) renderTalk(talkIndex + 1); }
+function randomTalk() { renderTalk(Math.floor(Math.random() * allTalks.length)); }
+
+async function initTalks() {
+  try {
+    document.getElementById('talk-loading').textContent = '⏳ Loading talks from dhammatalks.org...';
+    allTalks = await fetchAllTalks();
+    if (!allTalks.length) throw new Error('No talks found');
+    // Pick today's talk using a seeded random so it's the same all day
+    const rand = seededRand(todaySeed());
+    const idx = Math.floor(rand() * allTalks.length);
+    renderTalk(idx);
+  } catch(e) {
+    document.getElementById('talk-loading').style.display = 'none';
+    const err = document.getElementById('talk-error');
+    err.style.display = 'block';
+    err.textContent = '⚠️ Could not load talks. Check your connection or visit dhammatalks.org directly.';
+  }
+}
+initTalks();
+
+// ============================================================
+//  NEWS  (multi-proxy fallback)
+// ============================================================
+const RSS_FEEDS = {
+  'ABC AU':       'https://www.abc.net.au/news/feed/51120/rss.xml',
+  'BBC':          'https://feeds.bbci.co.uk/news/rss.xml',
+  'Guardian AU':  'https://www.theguardian.com/australia-news/rss',
+  'News.com.au':  'https://www.news.com.au/content-feeds/latest-news-national/',
+  'Politico':     'https://rss.politico.com/politics-news.xml',
+  'Al Jazeera':   'https://www.aljazeera.com/xml/rss/all.xml',
+};
+const PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+let activeFeed = 'Guardian AU';
+
+function buildFeedSelector() {
+  const sel = document.getElementById('feed-selector');
+  sel.innerHTML = '';
+  Object.keys(RSS_FEEDS).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'feed-btn' + (name === activeFeed ? ' active' : '');
+    btn.textContent = name;
+    btn.onclick = () => { activeFeed = name; buildFeedSelector(); loadFeed(); };
+    sel.appendChild(btn);
+  });
+}
+
+async function fetchWithFallback(url) {
+  for (const makeProxy of PROXIES) {
+    try {
+      const res = await fetch(makeProxy(url), {signal: AbortSignal.timeout(7000)});
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text && text.trim().length > 100) return text;
+    } catch(e) {}
+  }
+  throw new Error('All proxies failed');
+}
+
+async function loadFeed() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '<div class="news-loading">⏳ Fetching...</div>';
+  try {
+    const data = await fetchWithFallback(RSS_FEEDS[activeFeed]);
+    const xml = new DOMParser().parseFromString(data, 'application/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0, 20);
+    if (!items.length) throw new Error('No items');
+    list.innerHTML = items.map(item => {
+      const title = item.querySelector('title')?.textContent?.trim() || 'Untitled';
+      const linkEl = item.querySelector('link');
+      let link = '#';
+      if (linkEl) {
+        const tc = linkEl.textContent?.trim();
+        const ns = linkEl.nextSibling?.nodeValue?.trim();
+        link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
+      }
+      const pub = item.querySelector('pubDate')?.textContent || '';
+      const date = pub ? new Date(pub).toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+      return `<div class="news-item">
+        <a href="${link}" target="_blank" rel="noopener">${title}</a>
+        <div class="news-meta"><span class="news-source-badge">${activeFeed}</span>${date}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="news-error">⚠️ Could not load feed. Try another source or check your connection.</div>`;
+  }
+}
+buildFeedSelector();
+loadFeed();
+
+// ============================================================
+//  DAILY SUTTA
+// ============================================================
+const SUTTAS = [
+  {uid:'mn1',    name:'The Root of All Things'},
+  {uid:'mn2',    name:'All the Taints'},
+  {uid:'mn8',    name:'Expunging'},
+  {uid:'mn10',   name:'Mindfulness Meditation'},
+  {uid:'sn22.59',name:'The Five Aggregates'},
+  {uid:'sn35.28',name:'The Fire Sermon'},
+  {uid:'dn2',    name:'The Fruits of the Ascetic Life'},
+  {uid:'dn9',    name:'With Poṭṭhapāda'},
+  {uid:'an4.41', name:'Conduct'},
+  {uid:'an8.53', name:'With Dīghajāṇu'},
+  {uid:'dhp1-20',name:'Dhammapada: Pairs'},
+  {uid:'snp1.1', name:'The Rhinoceros Horn'},
+  {uid:'snp4.15',name:'The Way to the Beyond'},
+  {uid:'ud3.10', name:'About Lohicca'},
+  {uid:'mn118',  name:'Mindfulness of Breathing'},
+];
+
+async function loadDailySutta() {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const sutta = SUTTAS[dayOfYear % SUTTAS.length];
+  document.getElementById('sutta-uid').textContent = sutta.uid.toUpperCase() + ' · Sujato';
+  try {
+    const proxy = `https://corsproxy.io/?url=${encodeURIComponent(`https://suttacentral.net/api/bilarasuttas/${sutta.uid}/sujato`)}`;
+    const data = await (await fetch(proxy, {signal: AbortSignal.timeout(12000)})).json();
+    const order = data.keys_order || [];
+    const trans = data.translation_text || {};
+    const text = order.map(k => trans[k] || '').join('\n\n').trim();
+    document.getElementById('sutta-loading-msg').style.display = 'none';
+    document.getElementById('sutta-content').style.display = 'block';
+    document.getElementById('sutta-name').textContent = sutta.name;
+    document.getElementById('sutta-text').textContent = text;
+    document.getElementById('sutta-link').href = `https://suttacentral.net/${sutta.uid}/en/sujato`;
+  } catch(e) {
+    document.getElementById('sutta-loading-msg').textContent = '⚠️ Could not load sutta. Check your connection.';
+  }
+}
+loadDailySutta();
+</script>
+</body>
+</html>
