@@ -380,20 +380,38 @@ function parseTalks(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const talks = [];
   doc.querySelectorAll('a[href$=".mp3"]').forEach(a => {
-    const mp3 = a.href.startsWith('http') ? a.href : 'https://www.dhammatalks.org' + a.getAttribute('href');
+    // Always use getAttribute to get the raw href — a.href resolves relative
+    // to about:blank inside DOMParser, giving a broken URL
+    const rawHref = a.getAttribute('href') || '';
+    const mp3 = rawHref.startsWith('http')
+      ? rawHref
+      : 'https://www.dhammatalks.org' + (rawHref.startsWith('/') ? '' : '/') + rawHref;
+
+    // Title: use the link text itself, or look for a sibling non-mp3 link
     const li = a.closest('li');
-    let title = 'Unknown Talk', dateStr = '';
+    let title = a.textContent.trim() || 'Dharma Talk';
+    let dateStr = '';
     if (li) {
       const titleLink = li.querySelector('a:not([href$=".mp3"])');
-      if (titleLink) title = titleLink.textContent.trim();
-      const match = mp3.match(/\/(\d{6})\(/);
-      if (match) {
-        const code = match[1];
-        dateStr = new Date(2000 + parseInt(code.slice(0,2)), parseInt(code.slice(2,4))-1, parseInt(code.slice(4,6)))
-          .toLocaleDateString([], {year:'numeric', month:'long', day:'numeric'});
-      }
+      if (titleLink && titleLink.textContent.trim()) title = titleLink.textContent.trim();
     }
-    talks.push({title, mp3, dateStr});
+
+    // Extract date from filename — handles formats like:
+    //   230415morningpuja.mp3  →  2023-04-15
+    //   050415(Metta).mp3      →  2005-04-15
+    const dateMatch = mp3.match(/(\/|\()(\d{2})(\d{2})(\d{2})[^/]*\.mp3/);
+    if (dateMatch) {
+      const [, , yy, mm, dd] = dateMatch;
+      const yr = parseInt(yy) + (parseInt(yy) > 50 ? 1900 : 2000);
+      try {
+        dateStr = new Date(yr, parseInt(mm)-1, parseInt(dd))
+          .toLocaleDateString([], {year:'numeric', month:'long', day:'numeric'});
+      } catch(e) {}
+    }
+
+    if (mp3.includes('dhammatalks.org')) {
+      talks.push({title, mp3, dateStr});
+    }
   });
   return talks;
 }
