@@ -100,6 +100,15 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinning { animation: spin 0.8s linear infinite; display: inline-block; }
 
+/* ── NEWS MAIN TABS ── */
+.news-main-tab {
+  font-size: 0.7rem; font-family: var(--font-mono); padding: 3px 10px;
+  border-radius: 20px; border: 1px solid var(--border-mid);
+  background: none; color: var(--ink-light); cursor: pointer; transition: all 0.15s;
+}
+.news-main-tab.active { background: var(--ink) !important; color: var(--cream) !important; border-color: var(--ink) !important; }
+.news-main-tab:hover:not(.active) { background: var(--cream2); }
+
 /* ── AI DIGEST CARD ── */
 .digest-body { font-size: 0.88rem; line-height: 1.65; color: var(--ink-mid); }
 .digest-body p + p { margin-top: 10px; }
@@ -188,7 +197,6 @@ body {
 .nav-title { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-/* ── ROAD TRIP (preserved) ── */
 /* ── ROAD TRIP ── */
 #page-roadtrip { overflow: hidden; }
 #page-roadtrip .page-body { flex: 1; height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
@@ -295,7 +303,6 @@ body {
 #page-roadtrip .leaflet-control-zoom a { background: #1c2330 !important; color: #e6edf3 !important; border-color: #2a3441 !important; }
 #page-roadtrip .leaflet-tile-pane { filter: brightness(0.7) saturate(0.8); }
 
-
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-up { animation: fadeUp 0.3s ease forwards; }
 @media (max-width: 480px) {
@@ -325,32 +332,35 @@ body {
       <div class="home-hero-sub">What are we doing today?</div>
     </div>
 
-    <!-- AI Digest Card -->
-    <div class="home-card fade-up" id="digest-card">
-      <div class="home-card-header">
-        <span class="home-card-label">📰 Morning Digest</span>
-        <button class="home-card-refresh" id="digest-refresh-btn" onclick="digestLoad()" title="Refresh">↻</button>
-      </div>
-      <div class="home-card-body" id="digest-body">
-        <div class="digest-loading"><div class="digest-spinner"></div> Generating digest…</div>
-      </div>
-    </div>
-
-    <!-- News Card -->
+    <!-- News + Digest Combined Card -->
     <div class="home-card fade-up" id="news-card" style="animation-delay:0.05s">
       <div class="home-card-header">
-        <span class="home-card-label">🗞️ Headlines</span>
+        <span class="home-card-label">🗞️ News</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <button class="news-main-tab active" data-tab="summary" onclick="newsSetTab('summary')">Summary</button>
+          <button class="news-main-tab" data-tab="headlines" onclick="newsSetTab('headlines')">Headlines</button>
+          <button class="home-card-refresh" id="digest-refresh-btn" onclick="digestLoad()" title="Refresh summary">↻</button>
+        </div>
       </div>
-      <div class="news-tabs" id="news-tabs"></div>
-      <div class="news-list" id="news-list">
-        <div class="news-status">Loading…</div>
+      <!-- Summary panel -->
+      <div id="news-summary-panel">
+        <div class="home-card-body" id="digest-body">
+          <div class="digest-loading"><div class="digest-spinner"></div> Generating digest…</div>
+        </div>
+      </div>
+      <!-- Headlines panel -->
+      <div id="news-headlines-panel" style="display:none">
+        <div class="news-tabs" id="news-feed-tabs"></div>
+        <div class="news-list" id="news-list">
+          <div class="news-status">Loading…</div>
+        </div>
       </div>
     </div>
 
     <!-- Talks Card -->
     <div class="home-card fade-up" id="talks-card" style="animation-delay:0.10s">
       <div class="home-card-header">
-        <span class="home-card-label">🎙️ Dharma Talk</span>
+        <span class="home-card-label">🎙️ Dhamma Talk</span>
         <button class="home-card-refresh" id="talks-refresh-btn" onclick="talksLoad()" title="Refresh">↻</button>
       </div>
       <div class="home-card-body" id="talks-body">
@@ -492,7 +502,14 @@ function tipPrev()   { tipRender(tipIndex - 1); }
 function tipRandom() { tipRender(Math.floor(Math.random() * TIPS.length)); }
 
 // ════════════════════════════════════════════
-//  INIT — greeting, date, load all cards
+//  FIX #1 — declare BEFORE init() runs
+//  (was declared after, causing temporal dead zone ReferenceError)
+// ════════════════════════════════════════════
+let activeNewsFeed   = 'ABC AU';
+let rtMapInitialised = false;
+
+// ════════════════════════════════════════════
+//  INIT
 // ════════════════════════════════════════════
 (function init() {
   const now = new Date();
@@ -502,16 +519,13 @@ function tipRandom() { tipRender(Math.floor(Math.random() * TIPS.length)); }
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
   tipRender(tipDailyIndex());
-  digestLoad();
-  newsLoad('ABC AU');
+  newsCardInit();
   talksLoad();
 })();
 
 // ════════════════════════════════════════════
 //  ROUTER
 // ════════════════════════════════════════════
-let rtMapInitialised = false;
-
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
@@ -526,39 +540,7 @@ function escHtml(s) {
 }
 
 // ════════════════════════════════════════════
-//  AI DIGEST — via Worker /digest
-// ════════════════════════════════════════════
-async function digestLoad() {
-  const body = document.getElementById('digest-body');
-  const btn  = document.getElementById('digest-refresh-btn');
-  body.innerHTML = '<div class="digest-loading"><div class="digest-spinner"></div> Generating digest…</div>';
-  btn.classList.add('spinning');
-  try {
-    const r = await fetch(`${WORKER}/digest`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const d = await r.json();
-    if (d.commentary) {
-      const paras = d.commentary.split(/\n\n+/).filter(Boolean);
-      body.innerHTML = '<div class="digest-body">' +
-        paras.map(p => `<p>${escHtml(p.trim())}</p>`).join('') +
-        `<div class="digest-ts">Updated ${new Date(d.generatedAt).toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit'})}</div>` +
-        '</div>';
-    } else if (d.headlines?.length) {
-      body.innerHTML = '<div class="digest-body">' +
-        d.headlines.slice(0,8).map(h => `<p>• ${escHtml(h)}</p>`).join('') +
-        '</div>';
-    } else {
-      body.innerHTML = '<div class="digest-error">⚠️ No digest available. Try refreshing.</div>';
-    }
-  } catch(e) {
-    body.innerHTML = `<div class="digest-error">⚠️ Could not load digest: ${escHtml(e.message)}</div>`;
-  } finally {
-    btn.classList.remove('spinning');
-  }
-}
-
-// ════════════════════════════════════════════
-//  NEWS — tabs + feed via rss2json / proxy
+//  NEWS + DIGEST — combined card, two tabs
 // ════════════════════════════════════════════
 const NEWS_FEEDS = {
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
@@ -567,17 +549,76 @@ const NEWS_FEEDS = {
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
   'SBS News':    'https://www.sbs.com.au/news/feed',
 };
-let activeNewsFeed = 'ABC AU';
+
+// Cache digest so switching tabs doesn't re-fetch every time
+let digestCache = null;
+
+function newsCardInit() {
+  newsSetTab('summary');
+  digestLoad();
+  newsLoad(activeNewsFeed);
+}
+
+function newsSetTab(tab) {
+  document.querySelectorAll('.news-main-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  const summaryPanel  = document.getElementById('news-summary-panel');
+  const headlinePanel = document.getElementById('news-headlines-panel');
+  if (summaryPanel)  summaryPanel.style.display  = tab === 'summary'   ? '' : 'none';
+  if (headlinePanel) headlinePanel.style.display = tab === 'headlines' ? '' : 'none';
+}
+
+async function digestLoad() {
+  const body = document.getElementById('digest-body');
+  const btn  = document.getElementById('digest-refresh-btn');
+  if (!body) return;
+
+  // Use cache if less than 30 minutes old
+  if (digestCache && (Date.now() - digestCache.ts) < 30 * 60 * 1000) {
+    body.innerHTML = digestCache.html;
+    return;
+  }
+
+  body.innerHTML = '<div class="digest-loading"><div class="digest-spinner"></div> Generating digest…</div>';
+  if (btn) btn.classList.add('spinning');
+  try {
+    const r = await fetch(`${WORKER}/digest`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    let html = '';
+    if (d.commentary) {
+      const paras = d.commentary.split(/\n\n+/).filter(Boolean);
+      html = '<div class="digest-body">' +
+        paras.map(p => `<p>${escHtml(p.trim())}</p>`).join('') +
+        `<div class="digest-ts">Updated ${new Date(d.generatedAt).toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit'})}</div>` +
+        '</div>';
+    } else if (d.headlines?.length) {
+      html = '<div class="digest-body">' +
+        d.headlines.slice(0,8).map(h => `<p>• ${escHtml(h)}</p>`).join('') +
+        '</div>';
+    } else {
+      html = '<div class="digest-error">⚠️ No digest available. Try refreshing.</div>';
+    }
+    digestCache = { html, ts: Date.now() };
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = `<div class="digest-error">⚠️ Could not load digest: ${escHtml(e.message)}</div>`;
+  } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
 
 function newsLoad(name) {
   activeNewsFeed = name || activeNewsFeed;
-  // Rebuild tabs
-  const tabs = document.getElementById('news-tabs');
-  tabs.innerHTML = Object.keys(NEWS_FEEDS).map(n =>
-    `<button class="news-tab-btn${n === activeNewsFeed ? ' active' : ''}" onclick="newsLoad('${n}')">${n}</button>`
-  ).join('');
-  // Load feed
+  const tabs = document.getElementById('news-feed-tabs');
+  if (tabs) {
+    tabs.innerHTML = Object.keys(NEWS_FEEDS).map(n =>
+      `<button class="news-tab-btn${n === activeNewsFeed ? ' active' : ''}" onclick="newsLoad('${n}')">${n}</button>`
+    ).join('');
+  }
   const list = document.getElementById('news-list');
+  if (!list) return;
   list.innerHTML = '<div class="news-status">⏳ Loading…</div>';
   fetchNewsItems(NEWS_FEEDS[activeNewsFeed])
     .then(items => {
@@ -588,7 +629,7 @@ function newsLoad(name) {
         </div>`
       ).join('');
     })
-    .catch(e => {
+    .catch(() => {
       list.innerHTML = `<div class="news-status err">⚠️ Could not load ${escHtml(activeNewsFeed)}. Try another feed.</div>`;
     });
 }
@@ -611,7 +652,6 @@ function parseRssXml(text) {
 }
 
 async function fetchNewsItems(rssUrl) {
-  // 1. rss2json
   try {
     const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(12000) });
     const j = await r.json();
@@ -622,12 +662,10 @@ async function fetchNewsItems(rssUrl) {
       }));
     }
   } catch(e) {}
-  // 2. allorigins /get
   try {
     const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(14000) });
     if (r.ok) { const j = await r.json(); if (j.contents) return parseRssXml(j.contents); }
   } catch(e) {}
-  // 3. thingproxy
   try {
     const r = await fetch(`https://thingproxy.freeboard.io/fetch/${rssUrl}`, { signal: AbortSignal.timeout(14000) });
     if (r.ok) { const t = await r.text(); if (t?.length > 200) return parseRssXml(t); }
@@ -636,7 +674,12 @@ async function fetchNewsItems(rssUrl) {
 }
 
 // ════════════════════════════════════════════
-//  TALKS — Dhammatalks only, via Worker /talks
+//  TALKS
+//  FIX #2: rewritten parser for new dhammatalks.org HTML
+//  Old structure: <a href="...mp3">  ← no longer present
+//  New structure: <li class="li-audio">
+//                   <button class="play" data-link="...mp3">
+//                   <a class="audio"><span>Title</span></a>
 // ════════════════════════════════════════════
 let allTalks  = [];
 let talkIndex = 0;
@@ -654,28 +697,39 @@ function parseDhammaTalks(html) {
   const doc  = new DOMParser().parseFromString(html, 'text/html');
   const seen = new Set();
   const out  = [];
-  doc.querySelectorAll('a[href*=".mp3"]').forEach(a => {
-    const raw = (a.getAttribute('href') || '').trim();
-    if (!raw) return;
-    const mp3 = raw.startsWith('http') ? raw : 'https://www.dhammatalks.org' + (raw.startsWith('/') ? '' : '/') + raw;
-    if (!mp3.includes('dhammatalks.org') || seen.has(mp3)) return;
+
+  doc.querySelectorAll('li.li-audio').forEach(li => {
+    const btn = li.querySelector('button[data-link]');
+    const aEl = li.querySelector('a.audio span') || li.querySelector('a.audio');
+    if (!btn) return;
+
+    const rawLink = btn.getAttribute('data-link') || '';
+    if (!rawLink) return;
+    const mp3 = rawLink.startsWith('http')
+      ? rawLink
+      : 'https://www.dhammatalks.org' + (rawLink.startsWith('/') ? '' : '/') + rawLink;
+    if (seen.has(mp3)) return;
     seen.add(mp3);
-    let title = a.textContent.trim();
-    if (!title || title.toLowerCase().endsWith('.mp3')) {
-      const c = a.closest('li') || a.closest('td') || a.closest('div');
-      if (c) { const h = c.querySelector('b,strong,h3,h4,.title'); if (h?.textContent.trim()) title = h.textContent.trim(); }
-    }
-    if (!title || title.toLowerCase().endsWith('.mp3')) {
-      title = mp3.split('/').pop().replace(/\.mp3$/i,'').replace(/^\d{6}[-_]?/,'').replace(/[-_]/g,' ').trim() || 'Dharma Talk';
-    }
+
+    const title = aEl?.textContent?.trim()
+      || mp3.split('/').pop().replace(/\.mp3$/i,'').replace(/[-_]/g,' ').trim()
+      || 'Dharma Talk';
+
+    // Parse date from li id, e.g. "260208-high-level-goodwill"
     let dateStr = '';
-    const dm = mp3.match(/[\/_](\d{2})(\d{2})(\d{2})(?:[^/\d]|$)/);
-    if (dm) {
-      const [,yy,mm,dd] = dm, yr = parseInt(yy) + (parseInt(yy) < 50 ? 2000 : 1900), mo = parseInt(mm)-1, dy = parseInt(dd);
-      if (mo >= 0 && mo < 12 && dy >= 1 && dy <= 31) try { dateStr = new Date(yr,mo,dy).toLocaleDateString('en-AU',{year:'numeric',month:'long',day:'numeric'}); } catch(e) {}
+    const idMatch = li.id?.match(/^(\d{2})(\d{2})(\d{2})-/);
+    if (idMatch) {
+      const [,yy,mm,dd] = idMatch;
+      const yr = parseInt(yy) + (parseInt(yy) < 50 ? 2000 : 1900);
+      const mo = parseInt(mm) - 1, dy = parseInt(dd);
+      if (mo >= 0 && mo < 12 && dy >= 1 && dy <= 31) {
+        try { dateStr = new Date(yr, mo, dy).toLocaleDateString('en-AU', {year:'numeric', month:'long', day:'numeric'}); } catch(e) {}
+      }
     }
+
     out.push({ title, mp3, dateStr, teacher: 'Thanissaro Bhikkhu' });
   });
+
   return out;
 }
 
@@ -955,9 +1009,6 @@ function rtBoot() {
     );
   } else { rtSetLocText(`${rtState.locationName} (GPS not supported)`); rtRefreshAll(); }
 }
-
-
-
 </script>
 </body>
 </html>
