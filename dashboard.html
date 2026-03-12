@@ -1451,33 +1451,35 @@ const SUTTAS = [
 //  SHARED PROXIES
 // ============================================================
 const PROXIES = [
-  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
 ];
 
-async function fetchWithFallback(url, timeoutMs = 14000) {
-  const perTimeout = Math.max(5000, Math.floor(timeoutMs / 4));
-  // 1. Direct (works if target has CORS headers)
+// Fetch via codetabs (primary) then allorigins /get (fallback)
+// Direct, corsproxy, allorigins/raw are all blocked in this environment
+async function fetchWithFallback(url, timeoutMs = 16000) {
+  const perTimeout = Math.max(7000, Math.floor(timeoutMs / 2));
+
+  // 1. codetabs — confirmed working, returns raw content
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
-  } catch(e) { console.warn('fetchWithFallback direct failed:', e.message); }
-  // 2. corsproxy.io
-  try {
-    const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
-  } catch(e) { console.warn('fetchWithFallback corsproxy failed:', e.message); }
-  // 3. allorigins /get (returns JSON wrapper { contents: "..." })
-  try {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) { const j = await r.json(); if (j.contents && j.contents.length > 50) return j.contents; }
-  } catch(e) { console.warn('fetchWithFallback allorigins failed:', e.message); }
-  // 4. codetabs
-  try {
-    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
+    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) {
+      const t = await r.text();
+      if (t && t.length > 50) { console.log('fetchWithFallback: codetabs OK', url.slice(0,60)); return t; }
+    }
   } catch(e) { console.warn('fetchWithFallback codetabs failed:', e.message); }
+
+  // 2. allorigins /get — returns JSON { contents, status: { url, content_type } }
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) {
+      const j = await r.json();
+      if (j.contents && j.contents.length > 50) { console.log('fetchWithFallback: allorigins OK', url.slice(0,60)); return j.contents; }
+    }
+  } catch(e) { console.warn('fetchWithFallback allorigins failed:', e.message); }
+
   throw new Error('All CORS strategies failed for: ' + url);
 }
 
@@ -1663,27 +1665,9 @@ async function loadTalks(source) {
   try {
     let raw;
     if (src.type === 'rss') {
-      // For RSS: try rss2json first, then raw proxy
-      try {
-        const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.archiveUrl)}&count=50`;
-        const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
-        const j   = await r.json();
-        if (j.status === 'ok' && j.items?.length) {
-          allTalks = j.items.map(item => {
-            const mp3 = item.enclosure?.link || item.link || '';
-            return {
-              title:   item.title || 'Dharma Talk',
-              mp3:     mp3,
-              dateStr: item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU',{year:'numeric',month:'long',day:'numeric'}) : '',
-              teacher: item.author || 'Abhayagiri',
-            };
-          }).filter(t => t.mp3);
-        } else throw new Error('rss2json: ' + (j.message||'no items'));
-      } catch(e1) {
-        console.warn('Talks rss2json failed, trying raw:', e1.message);
-        raw      = await fetchWithFallback(src.archiveUrl, 14000);
-        allTalks = parseAbhayagiriRSS(raw);
-      }
+      // For RSS: fetch via codetabs/allorigins proxy chain, then parse XML
+      raw      = await fetchWithFallback(src.archiveUrl, 16000);
+      allTalks = parseAbhayagiriRSS(raw);
     } else {
       // HTML scrape for Dhammatalks
       raw      = await fetchWithFallback(src.archiveUrl, 14000);
@@ -1748,32 +1732,15 @@ function buildNewsTabs() {
 }
 
 async function loadNewsFeed() {
-  const grid = document.getElementById('news-grid');
-  grid.innerHTML = '<div class="news-loading">⏳ Fetching…</div>';
-
+  const grid   = document.getElementById('news-grid');
   const rssUrl = RSS_FEEDS[activeFeed];
-
-  // Strategy 1: rss2json.com — purpose-built RSS→JSON with proper CORS headers
-  async function tryRss2Json() {
-    const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`;
-    const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
-    if (!r.ok) throw new Error(`rss2json ${r.status}`);
-    const j = await r.json();
-    if (j.status !== 'ok' || !j.items?.length) throw new Error('rss2json: ' + (j.message||'no items'));
-    return j.items.map(item => ({
-      title: item.title || 'Untitled',
-      link:  item.link  || '#',
-      date:  item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
-    }));
-  }
-
-  // Strategy 2: raw RSS via CORS proxy fallback chain, then parse XML
-  async function tryRawProxy() {
+  grid.innerHTML = '<div class="news-loading">⏳ Fetching…</div>';
+  try {
     const data  = await fetchWithFallback(rssUrl, 16000);
     const xml   = new DOMParser().parseFromString(data, 'application/xml');
     const items = Array.from(xml.querySelectorAll('item')).slice(0, 20);
     if (!items.length) throw new Error('No items in XML');
-    return items.map(item => {
+    grid.innerHTML = items.map(item => {
       const title  = item.querySelector('title')?.textContent?.trim() || 'Untitled';
       const linkEl = item.querySelector('link');
       let link = '#';
@@ -1782,33 +1749,20 @@ async function loadNewsFeed() {
         const ns = linkEl.nextSibling?.nodeValue?.trim();
         link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
       }
-      const pub = item.querySelector('pubDate')?.textContent || '';
-      return {
-        title, link,
-        date: pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
-      };
-    });
-  }
-
-  try {
-    let items;
-    try       { items = await tryRss2Json(); }
-    catch(e1) {
-      console.warn('rss2json failed, trying raw proxy:', e1.message);
-      items = await tryRawProxy();
-    }
-
-    grid.innerHTML = items.map(item => `<div class="news-card">
-      <a href="${escHtml(item.link)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
-      <div class="news-card-meta">
-        <span class="news-badge">${escHtml(activeFeed)}</span>
-        <span class="news-date">${item.date}</span>
-      </div>
-    </div>`).join('');
+      const pub  = item.querySelector('pubDate')?.textContent || '';
+      const date = pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '';
+      return `<div class="news-card">
+        <a href="${escHtml(link)}" target="_blank" rel="noopener">${escHtml(title)}</a>
+        <div class="news-card-meta">
+          <span class="news-badge">${escHtml(activeFeed)}</span>
+          <span class="news-date">${date}</span>
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) {
-    console.error('loadNewsFeed all strategies failed:', e);
+    console.error('loadNewsFeed failed:', e);
     grid.innerHTML = `<div class="news-error">⚠️ Could not load ${escHtml(activeFeed)} feed.<br>
-      Try another source, or <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">open the feed directly</a>.</div>`;
+      Try another source, or <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">open the feed directly ↗</a>.</div>`;
   }
 }
 
@@ -2352,27 +2306,32 @@ let skChartInst = null;
 let skActiveSym = null;
 let skChartRange = { range:'1mo', interval:'1d' };
 
-// Yahoo Finance fetch — try direct first (Yahoo allows browser CORS),
-// then query2 mirror, then proxy fallbacks
-async function skYahooFetch(sym, params, timeoutMs=10000) {
-  const hosts = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
-  ];
-  // 1. Try direct
-  for (const url of hosts) {
-    try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
-    } catch(e) {}
-  }
-  // 2. Try via proxies (use first host only)
-  for (const makeProxy of PROXIES) {
-    try {
-      const r = await fetch(makeProxy(hosts[0]), { signal: AbortSignal.timeout(timeoutMs) });
-      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
-    } catch(e) {}
-  }
+// Yahoo Finance fetch — direct is blocked, route through codetabs then allorigins
+async function skYahooFetch(sym, params, timeoutMs=12000) {
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?${params}`;
+  const perTimeout = Math.max(6000, Math.floor(timeoutMs / 2));
+
+  // 1. codetabs proxy
+  try {
+    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
+      { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) {
+      const t = await r.text();
+      if (t && t.length > 20) { console.log('skYahooFetch codetabs OK:', sym); return t; }
+    }
+  } catch(e) { console.warn('skYahooFetch codetabs failed:', sym, e.message); }
+
+  // 2. allorigins /get
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
+      { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) {
+      const j = await r.json();
+      if (j.contents && j.contents.length > 20) { console.log('skYahooFetch allorigins OK:', sym); return j.contents; }
+    }
+  } catch(e) { console.warn('skYahooFetch allorigins failed:', sym, e.message); }
+
+  console.warn('skYahooFetch all strategies failed for:', sym);
   return null;
 }
 
