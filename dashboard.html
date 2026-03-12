@@ -1476,7 +1476,7 @@ async function fetchWithFallback(url, timeoutMs = 16000) {
       { signal: AbortSignal.timeout(perTimeout) });
     if (r.ok) {
       const j = await r.json();
-      if (j.contents && j.contents.length > 50) { console.log('fetchWithFallback: allorigins OK', url.slice(0,60)); return j.contents; }
+      if (j.contents && j.contents.length > 200) { console.log('fetchWithFallback: allorigins OK', url.slice(0,60)); return j.contents; }
     }
   } catch(e) { console.warn('fetchWithFallback allorigins failed:', e.message); }
 
@@ -1713,7 +1713,7 @@ const RSS_FEEDS = {
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
   'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
-  'Reuters':     'https://feeds.reuters.com/reuters/topNews',
+  'SBS News':    'https://www.sbs.com.au/news/feed',
   'ABC World':   'https://www.abc.net.au/news/feed/52278/rss.xml',
   // Politico and News.com.au removed — blocked by codetabs
 };
@@ -2314,18 +2314,6 @@ let skChartRange = { range:'1mo', interval:'1d' };
 // History: https://stooq.com/q/d/l/?s=SYMBOL&d1=YYYYMMDD&d2=YYYYMMDD&i=d
 // CSV:   Date,Open,High,Low,Close,Volume
 
-function skParseStooqQuote(csv) {
-  // Returns {price, prev} — stooq only gives latest close, no prev close in quote endpoint
-  // so we fetch 2 rows from history for prev
-  const lines = csv.trim().split('\n').filter(l => l && !l.startsWith('Symbol'));
-  if (!lines.length) return null;
-  const cols = lines[0].split(',');
-  // format: Symbol,Date,Time,Open,High,Low,Close,Volume
-  const close = parseFloat(cols[6]);
-  if (isNaN(close) || close <= 0) return null;
-  return close;
-}
-
 function skParseStooqHistory(csv) {
   const lines = csv.trim().split('\n');
   if (lines.length < 2) return [];
@@ -2491,6 +2479,7 @@ async function skDrawChart(sym, avgCost) {
   ph.style.display = 'flex';
 
   const h   = SK_HOLDINGS.find(h => h.sym === sym);
+  if (!h) { ph.innerHTML = '<span class="ph-icon">⚠️</span>Unknown ticker'; return; }
   const pts = await skFetchHistory(h, skChartRange.range, skChartRange.interval);
   if (!pts || !pts.length) {
     ph.innerHTML = '<span class="ph-icon">⚠️</span>Could not load chart data'; return;
