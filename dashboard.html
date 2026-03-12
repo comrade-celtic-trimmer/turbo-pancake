@@ -1036,128 +1036,6 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
   .nav-title { font-size: 0.9rem; }
   #sk-summary { grid-template-columns: repeat(2, 1fr); }
 }
-
-/* ============================================================
-   SCRIBE PAGE
-   ============================================================ */
-#page-scribe .page-body { background: var(--cream); }
-#scribe-inner {
-  max-width: 780px; margin: 0 auto; padding: 28px 28px 60px;
-}
-#scribe-textarea {
-  width: 100%; min-height: 340px; box-sizing: border-box;
-  font-family: var(--font-body); font-size: 0.95rem; line-height: 1.75;
-  color: var(--ink); background: #fff; border: 2px solid var(--sand);
-  border-radius: 12px; padding: 20px 22px; resize: vertical;
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 12px rgba(44,36,22,0.05);
-}
-#scribe-textarea:focus { border-color: #9b59b6; box-shadow: 0 2px 18px rgba(155,89,182,0.12); }
-#scribe-textarea::placeholder { color: #b8a98a; }
-.scribe-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-#scribe-suggest-btn {
-  font-family: var(--font-body); font-size: 0.82rem; font-weight: 700;
-  background: #9b59b6; color: #fff; border: none; border-radius: 9px;
-  padding: 10px 22px; cursor: pointer; transition: background 0.15s, transform 0.1s;
-  display: flex; align-items: center; gap: 7px;
-}
-#scribe-suggest-btn:hover { background: #7d3c98; transform: translateY(-1px); }
-#scribe-suggest-btn:disabled { background: #c8a8d4; cursor: not-allowed; transform: none; }
-#scribe-clear-btn {
-  font-family: var(--font-body); font-size: 0.8rem; font-weight: 600;
-  background: transparent; color: var(--ink-light); border: 1.5px solid var(--sand);
-  border-radius: 9px; padding: 10px 16px; cursor: pointer; transition: all 0.15s;
-}
-#scribe-clear-btn:hover { border-color: #9b59b6; color: #9b59b6; }
-#scribe-char-count { font-family: var(--font-mono); font-size: 0.62rem; color: var(--ink-light); margin-left: auto; }
-#scribe-result {
-  display: none; margin-top: 22px; background: #fff; border-radius: 14px;
-  border: 2px solid #e0c8f0; box-shadow: 0 4px 24px rgba(155,89,182,0.10);
-  overflow: hidden;
-}
-.scribe-result-header {
-  background: linear-gradient(135deg, #9b59b6 0%, #7d3c98 100%);
-  color: #fff; padding: 14px 20px; font-size: 0.68rem; font-weight: 800;
-  letter-spacing: 0.12em; text-transform: uppercase; font-family: var(--font-body);
-  display: flex; align-items: center; gap: 8px;
-}
-.scribe-result-body { padding: 20px 22px; }
-.scribe-folder-path {
-  font-family: var(--font-mono); font-size: 1.05rem; font-weight: 600;
-  color: #7d3c98; background: #f8f0fc; border-radius: 8px;
-  padding: 10px 16px; margin-bottom: 14px; letter-spacing: 0.01em;
-  border: 1.5px solid #e0c8f0; display: flex; align-items: center; gap: 8px;
-}
-.scribe-folder-new { background: #fffbf0; border-color: #f0d060; color: #7a5800; }
-.scribe-folder-new::before { content: '★ NEW  '; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: #c8960a; }
-.scribe-reasoning {
-  font-size: 0.8rem; color: var(--ink-light); line-height: 1.65;
-  font-style: italic; margin-bottom: 16px; font-family: var(--font-body);
-}
-.scribe-copy-btn {
-  font-family: var(--font-body); font-size: 0.75rem; font-weight: 700;
-  background: transparent; color: #9b59b6; border: 1.5px solid #c8a0d8;
-  border-radius: 7px; padding: 6px 14px; cursor: pointer; transition: all 0.15s;
-}
-.scribe-copy-btn:hover { background: #f8f0fc; border-color: #9b59b6; }
-#scribe-error {
-  display: none; margin-top: 14px; background: #fff3cd; border: 1.5px solid #ffc107;
-  border-radius: 9px; padding: 10px 14px; font-size: 0.76rem; font-weight: 600;
-  color: #856404; font-family: var(--font-body);
-}
-.scribe-spinner {
-  display: inline-block; width: 12px; height: 12px;
-  border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
-  border-radius: 50%; animation: spin 0.7s linear infinite;
-}
-
-/* ── Stonks movers grid ── */
-#sk-movers-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px; margin-bottom: 28px;
-}
-.sk-mover-card {
-  background: var(--sk-surface); border: 1.5px solid var(--sk-border);
-  border-radius: 12px; padding: 14px 16px;
-  box-shadow: var(--sk-shadow); transition: transform 0.12s;
-}
-.sk-mover-card:hover { transform: translateY(-2px); }
-.sk-mover-card.up   { border-color: #b8ead8; }
-.sk-mover-card.down { border-color: #f5c6cf; }
-.sk-mover-card.loading { opacity: 0.5; }
-.sk-mover-sym  { font-size: 0.9rem; font-weight: 800; font-family: var(--font-body); color: var(--sk-accent); margin-bottom: 8px; }
-.sk-mover-pct  { font-family: var(--font-mono); font-size: 1.35rem; font-weight: 600; line-height: 1; margin-bottom: 4px; }
-.sk-mover-pct.up   { color: var(--sk-up); }
-.sk-mover-pct.down { color: var(--sk-down); }
-.sk-mover-pct.flat { color: var(--sk-muted); }
-.sk-mover-price { font-family: var(--font-mono); font-size: 0.68rem; color: var(--sk-muted); }
-.sk-mover-abs   { font-family: var(--font-mono); font-size: 0.65rem; margin-top: 2px; }
-.sk-mover-abs.up   { color: var(--sk-up); }
-.sk-mover-abs.down { color: var(--sk-down); }
-
-/* ── Commentary box ── */
-#sk-commentary-section { margin-bottom: 28px; }
-#sk-commentary-box {
-  background: var(--sk-surface); border: 1.5px solid var(--sk-border);
-  border-radius: 12px; padding: 20px 22px; box-shadow: var(--sk-shadow);
-  min-height: 90px;
-}
-#sk-commentary-placeholder {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 10px; text-align: center; color: var(--sk-muted); font-size: 0.78rem;
-  font-family: var(--font-body); font-weight: 500; min-height: 70px;
-}
-#sk-commentary-text {
-  font-size: 0.88rem; line-height: 1.75; color: var(--sk-text);
-  font-family: var(--font-body);
-}
-#sk-commentary-text p { margin: 0 0 12px; }
-#sk-commentary-text p:last-child { margin-bottom: 0; }
-.sk-commentary-sources {
-  margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--sk-border);
-  font-size: 0.62rem; color: var(--sk-muted); font-family: var(--font-mono);
-}
-#sk-holdings-section-table { margin-bottom: 28px; }
 </style>
 </head>
 <body>
@@ -1176,20 +1054,6 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
       <h1>Good <span id="home-greeting"></span>.</h1>
       <div class="home-hero-sub">What are we doing today?</div>
     </div>
-
-    <!-- Debug panel (remove once working) -->
-    <div id="debug-panel" style="width:100%;max-width:680px;margin-bottom:18px;background:#1c2330;border:1px solid #2a3441;border-radius:10px;padding:14px 18px;font-family:monospace;font-size:11px;color:#8b949e;display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="color:#e6edf3;font-weight:700;font-size:12px;">🔍 Network Debug</span>
-        <button onclick="runDebugTests()" style="background:#2e8de8;border:none;border-radius:5px;padding:3px 10px;color:#fff;font-size:11px;cursor:pointer;">Run Tests</button>
-        <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#7a8899;font-size:14px;cursor:pointer;margin-left:6px;">✕</button>
-      </div>
-      <div id="debug-log" style="line-height:1.8;"></div>
-    </div>
-    <button onclick="document.getElementById('debug-panel').style.display='block';runDebugTests()" 
-      style="width:100%;max-width:680px;margin-bottom:10px;background:transparent;border:1px dashed #c8b89a;border-radius:8px;padding:6px;font-size:11px;color:#8c7d6a;cursor:pointer;font-family:monospace;">
-      🔍 Show network debug
-    </button>
 
     <!-- Daily Sutta card -->
     <div class="sutta-feature-card fade-up" id="sutta-feature-card">
@@ -1227,13 +1091,7 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
       <div class="tool-card fade-up" style="--card-accent:#2e8de8;animation-delay:0.15s" onclick="navigate('stonks')">
         <div class="tool-card-icon">📊</div>
         <div class="tool-card-title">Stonks</div>
-        <div class="tool-card-desc">ASX portfolio daily digest</div>
-        <div class="tool-card-arrow">Open <span>→</span></div>
-      </div>
-      <div class="tool-card fade-up" style="--card-accent:#9b59b6;animation-delay:0.20s" onclick="navigate('scribe')">
-        <div class="tool-card-icon">✍️</div>
-        <div class="tool-card-title">Scribe</div>
-        <div class="tool-card-desc">Write a note, get an Obsidian folder suggestion</div>
+        <div class="tool-card-desc">ASX portfolio tracker with live prices</div>
         <div class="tool-card-arrow">Open <span>→</span></div>
       </div>
     </div>
@@ -1412,7 +1270,7 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Home
     </button>
-    <span class="nav-title">📊 Stonks <span style="font-size:0.7rem;font-weight:400;opacity:0.6;font-family:var(--font-mono)">ASX · AUD · EOD</span></span>
+    <span class="nav-title">📊 Stonks <span style="font-size:0.7rem;font-weight:400;opacity:0.6;font-family:var(--font-mono)">ASX · AUD</span></span>
     <div class="nav-right">
       <span id="sk-last-updated">Not yet loaded</span>
       <button id="sk-refresh-btn" onclick="skLoadAll()">
@@ -1423,17 +1281,11 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
   </div>
   <div class="page-body">
     <div id="stonks-inner">
-      <!-- Summary row -->
       <div id="sk-summary">
         <div class="sk-summary-card">
           <div class="sk-summary-label">Portfolio Value</div>
           <div class="sk-summary-value" id="sk-s-value">—</div>
-          <div class="sk-summary-sub" id="sk-s-value-sub">loading…</div>
-        </div>
-        <div class="sk-summary-card">
-          <div class="sk-summary-label">Today's Change</div>
-          <div class="sk-summary-value" id="sk-s-day">—</div>
-          <div class="sk-summary-sub" id="sk-s-day-sub">since prev close</div>
+          <div class="sk-summary-sub" id="sk-s-value-sub">loading prices…</div>
         </div>
         <div class="sk-summary-card">
           <div class="sk-summary-label">Total P&amp;L</div>
@@ -1441,58 +1293,55 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
           <div class="sk-summary-sub" id="sk-s-pnl-sub">vs cost basis</div>
         </div>
         <div class="sk-summary-card">
+          <div class="sk-summary-label">Day Change</div>
+          <div class="sk-summary-value" id="sk-s-day">—</div>
+          <div class="sk-summary-sub" id="sk-s-day-sub">since prev close</div>
+        </div>
+        <div class="sk-summary-card">
           <div class="sk-summary-label">Cost Basis</div>
           <div class="sk-summary-value" id="sk-s-cost">—</div>
           <div class="sk-summary-sub">total invested</div>
         </div>
       </div>
-
       <div id="sk-error-bar"></div>
-
-      <!-- Daily movers grid -->
       <div id="sk-holdings-section">
-        <div class="sk-section-label">Daily Change — Each Holding</div>
-        <div id="sk-movers-grid"></div>
-      </div>
-
-      <!-- AI Market Commentary -->
-      <div id="sk-commentary-section">
-        <div class="sk-section-label" style="display:flex;align-items:center;justify-content:space-between">
-          <span>✦ Market Commentary</span>
-          <button class="sk-range-btn" id="sk-commentary-btn" onclick="skFetchCommentary()" style="font-size:0.62rem">Generate</button>
-        </div>
-        <div id="sk-commentary-box">
-          <div id="sk-commentary-placeholder">
-            <span style="font-size:1.5rem;opacity:0.3">✦</span>
-            <span>Click <b>Generate</b> to get an AI interpretation of today's moves based on current headlines</span>
-          </div>
-          <div id="sk-commentary-text" style="display:none"></div>
-          <div id="sk-commentary-spinner" style="display:none;text-align:center;padding:24px">
-            <span class="sk-loading-spinner"></span>
-            <span style="font-size:0.76rem;color:var(--sk-muted);font-family:var(--font-body);margin-left:6px">Fetching headlines + generating commentary…</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Holdings detail table -->
-      <div id="sk-holdings-section-table">
-        <div class="sk-section-label">All Holdings</div>
+        <div class="sk-section-label">Holdings</div>
         <div class="sk-table-wrap">
           <table id="sk-holdings-table">
             <thead>
               <tr>
                 <th>Ticker</th><th>Units</th><th>Avg Cost</th><th>Last Price</th>
-                <th>Day Chg</th><th>Mkt Value</th><th>P&amp;L $</th><th>P&amp;L %</th>
+                <th>Day Chg</th><th>Mkt Value</th><th>P&amp;L $</th><th>P&amp;L %</th><th>Return Bar</th>
               </tr>
             </thead>
             <tbody id="sk-holdings-body">
-              <tr class="sk-loading-row"><td colspan="8"><span class="sk-loading-spinner"></span>Fetching prices…</td></tr>
+              <tr class="sk-loading-row"><td colspan="9"><span class="sk-loading-spinner"></span>Fetching live prices…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Allocation -->
+      <div id="sk-chart-section">
+        <div id="sk-chart-header">
+          <div>
+            <div id="sk-chart-ticker-label">Select a holding to view chart <span></span></div>
+            <div class="sk-cost-basis-note" id="sk-cost-basis-note" style="display:none"></div>
+          </div>
+          <div class="sk-range-btns">
+            <button class="sk-range-btn active" onclick="skSetRange('1mo','1d',this)">1M</button>
+            <button class="sk-range-btn" onclick="skSetRange('3mo','1d',this)">3M</button>
+            <button class="sk-range-btn" onclick="skSetRange('6mo','1wk',this)">6M</button>
+            <button class="sk-range-btn" onclick="skSetRange('1y','1wk',this)">1Y</button>
+            <button class="sk-range-btn" onclick="skSetRange('2y','1wk',this)">2Y</button>
+            <button class="sk-range-btn" onclick="skSetRange('5y','1mo',this)">5Y</button>
+          </div>
+        </div>
+        <div id="sk-chart-wrap">
+          <canvas id="sk-chart-canvas"></canvas>
+          <div id="sk-chart-placeholder">
+            <span class="ph-icon">📈</span>Click any holding to view its price history
+          </div>
+        </div>
+      </div>
       <div id="sk-alloc-section">
         <div class="sk-section-label">Allocation by Market Value</div>
         <div id="sk-alloc-grid"></div>
@@ -1501,46 +1350,12 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
   </div>
 </div>
 
-
-<div class="page" id="page-scribe">
-  <div class="nav-bar">
-    <button class="nav-home-btn" onclick="navigate('home')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Home
-    </button>
-    <span class="nav-title">✍️ Scribe</span>
-    <div class="nav-right"></div>
-  </div>
-  <div class="page-body">
-    <div id="scribe-inner">
-      <textarea id="scribe-textarea" placeholder="Write or paste your note here…&#10;&#10;Llama will suggest the best folder in your Obsidian vault, or recommend a new one if nothing fits."></textarea>
-      <div class="scribe-actions">
-        <button id="scribe-suggest-btn" onclick="scribeSuggest()">
-          <span id="scribe-btn-inner">✦ Suggest folder</span>
-        </button>
-        <button id="scribe-clear-btn" onclick="scribeClear()">Clear</button>
-        <span id="scribe-char-count">0 chars</span>
-      </div>
-      <div id="scribe-error"></div>
-      <div id="scribe-result">
-        <div class="scribe-result-header">✦ Suggested location</div>
-        <div class="scribe-result-body">
-          <div class="scribe-folder-path" id="scribe-folder-path"></div>
-          <div class="scribe-reasoning" id="scribe-reasoning"></div>
-          <button class="scribe-copy-btn" onclick="scribeCopyPath()">Copy path</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
 <script>
 // ============================================================
 //  ROUTER
 // ============================================================
 let rtMapInitialised = false;
-let skLoadedOnce     = false;
+let skIntervalId     = null;
 
 function navigate(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1548,15 +1363,31 @@ function navigate(page) {
 
   if (page === 'roadtrip' && !rtMapInitialised) {
     rtMapInitialised = true;
-    setTimeout(() => { rtInitMap(); rtBoot(); }, 80);
+    setTimeout(() => {
+      rtInitMap();
+      rtBoot();
+    }, 80); // slight delay so the element is visible and has dimensions
   }
 
-  // EOD data — load once per session, no polling needed
-  if (page === 'stonks' && !skLoadedOnce) {
-    skLoadedOnce = true;
+  if (page === 'stonks' && skIntervalId === null) {
     skLoadAll();
+    skIntervalId = setInterval(() => {
+      if (!document.hidden) skLoadAll();
+    }, 60000);
   }
 }
+
+// Pause stonks auto-refresh when tab is hidden — registered once only
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (skIntervalId !== null) { clearInterval(skIntervalId); skIntervalId = null; }
+  } else {
+    if (document.getElementById('page-stonks').classList.contains('active') && skIntervalId === null) {
+      skLoadAll();
+      skIntervalId = setInterval(() => { if (!document.hidden) skLoadAll(); }, 60000);
+    }
+  }
+});
 
 // ============================================================
 //  HOME — greeting & date
@@ -1606,36 +1437,21 @@ const SUTTAS = [
 //  SHARED PROXIES
 // ============================================================
 const PROXIES = [
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
 ];
 
-// Fetch via codetabs (primary) then allorigins /get (fallback)
-// Direct, corsproxy, allorigins/raw are all blocked in this environment
-async function fetchWithFallback(url, timeoutMs = 16000) {
-  const perTimeout = Math.max(7000, Math.floor(timeoutMs / 2));
-
-  // 1. codetabs — confirmed working, returns raw content
-  try {
-    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) {
-      const t = await r.text();
-      if (t && t.length > 50) { console.log('fetchWithFallback: codetabs OK', url.slice(0,60)); return t; }
-    }
-  } catch(e) { console.warn('fetchWithFallback codetabs failed:', e.message); }
-
-  // 2. allorigins /get — returns JSON { contents, status: { url, content_type } }
-  try {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) {
-      const j = await r.json();
-      if (j.contents && j.contents.length > 200) { console.log('fetchWithFallback: allorigins OK', url.slice(0,60)); return j.contents; }
-    }
-  } catch(e) { console.warn('fetchWithFallback allorigins failed:', e.message); }
-
-  throw new Error('All CORS strategies failed for: ' + url);
+async function fetchWithFallback(url, timeoutMs = 12000) {
+  for (const makeProxy of PROXIES) {
+    try {
+      const res  = await fetch(makeProxy(url), { signal: AbortSignal.timeout(timeoutMs) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text && text.trim().length > 100) return text;
+    } catch(e) { /* try next */ }
+  }
+  throw new Error('All proxies failed for: ' + url);
 }
 
 function escHtml(str) {
@@ -1820,9 +1636,27 @@ async function loadTalks(source) {
   try {
     let raw;
     if (src.type === 'rss') {
-      // For RSS: fetch via codetabs/allorigins proxy chain, then parse XML
-      raw      = await fetchWithFallback(src.archiveUrl, 16000);
-      allTalks = parseAbhayagiriRSS(raw);
+      // For RSS: try rss2json first, then raw proxy
+      try {
+        const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.archiveUrl)}&count=50`;
+        const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
+        const j   = await r.json();
+        if (j.status === 'ok' && j.items?.length) {
+          allTalks = j.items.map(item => {
+            const mp3 = item.enclosure?.link || item.link || '';
+            return {
+              title:   item.title || 'Dharma Talk',
+              mp3:     mp3,
+              dateStr: item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU',{year:'numeric',month:'long',day:'numeric'}) : '',
+              teacher: item.author || 'Abhayagiri',
+            };
+          }).filter(t => t.mp3);
+        } else throw new Error('rss2json: ' + (j.message||'no items'));
+      } catch(e1) {
+        console.warn('Talks rss2json failed, trying raw:', e1.message);
+        raw      = await fetchWithFallback(src.archiveUrl, 14000);
+        allTalks = parseAbhayagiriRSS(raw);
+      }
     } else {
       // HTML scrape for Dhammatalks
       raw      = await fetchWithFallback(src.archiveUrl, 14000);
@@ -1864,11 +1698,12 @@ window.navigate = function(page) {
 //  NEWS
 // ============================================================
 const RSS_FEEDS = {
-  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
   'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
+  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
+  'News.com.au': 'https://www.news.com.au/content-feeds/latest-news-national/',
+  'Politico':    'https://rss.politico.com/politics-news.xml',
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
-  'SBS News':    'https://www.sbs.com.au/news/feed',
 };
 let activeFeed  = 'Guardian AU';
 let newsLoaded  = false;
@@ -1886,15 +1721,32 @@ function buildNewsTabs() {
 }
 
 async function loadNewsFeed() {
-  const grid   = document.getElementById('news-grid');
-  const rssUrl = RSS_FEEDS[activeFeed];
+  const grid = document.getElementById('news-grid');
   grid.innerHTML = '<div class="news-loading">⏳ Fetching…</div>';
-  try {
+
+  const rssUrl = RSS_FEEDS[activeFeed];
+
+  // Strategy 1: rss2json.com — purpose-built RSS→JSON with proper CORS headers
+  async function tryRss2Json() {
+    const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`;
+    const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) throw new Error(`rss2json ${r.status}`);
+    const j = await r.json();
+    if (j.status !== 'ok' || !j.items?.length) throw new Error('rss2json: ' + (j.message||'no items'));
+    return j.items.map(item => ({
+      title: item.title || 'Untitled',
+      link:  item.link  || '#',
+      date:  item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
+    }));
+  }
+
+  // Strategy 2: raw RSS via CORS proxy fallback chain, then parse XML
+  async function tryRawProxy() {
     const data  = await fetchWithFallback(rssUrl, 16000);
     const xml   = new DOMParser().parseFromString(data, 'application/xml');
     const items = Array.from(xml.querySelectorAll('item')).slice(0, 20);
     if (!items.length) throw new Error('No items in XML');
-    grid.innerHTML = items.map(item => {
+    return items.map(item => {
       const title  = item.querySelector('title')?.textContent?.trim() || 'Untitled';
       const linkEl = item.querySelector('link');
       let link = '#';
@@ -1903,20 +1755,33 @@ async function loadNewsFeed() {
         const ns = linkEl.nextSibling?.nodeValue?.trim();
         link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
       }
-      const pub  = item.querySelector('pubDate')?.textContent || '';
-      const date = pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '';
-      return `<div class="news-card">
-        <a href="${escHtml(link)}" target="_blank" rel="noopener">${escHtml(title)}</a>
-        <div class="news-card-meta">
-          <span class="news-badge">${escHtml(activeFeed)}</span>
-          <span class="news-date">${date}</span>
-        </div>
-      </div>`;
-    }).join('');
+      const pub = item.querySelector('pubDate')?.textContent || '';
+      return {
+        title, link,
+        date: pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
+      };
+    });
+  }
+
+  try {
+    let items;
+    try       { items = await tryRss2Json(); }
+    catch(e1) {
+      console.warn('rss2json failed, trying raw proxy:', e1.message);
+      items = await tryRawProxy();
+    }
+
+    grid.innerHTML = items.map(item => `<div class="news-card">
+      <a href="${escHtml(item.link)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
+      <div class="news-card-meta">
+        <span class="news-badge">${escHtml(activeFeed)}</span>
+        <span class="news-date">${item.date}</span>
+      </div>
+    </div>`).join('');
   } catch(e) {
-    console.error('loadNewsFeed failed:', e);
+    console.error('loadNewsFeed all strategies failed:', e);
     grid.innerHTML = `<div class="news-error">⚠️ Could not load ${escHtml(activeFeed)} feed.<br>
-      Try another source, or <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">open the feed directly ↗</a>.</div>`;
+      Try another source, or <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">open the feed directly</a>.</div>`;
   }
 }
 
@@ -2441,7 +2306,7 @@ function rtBoot() {
 }
 
 // ============================================================
-//  STONKS — Daily Digest
+//  STONKS
 // ============================================================
 const SK_HOLDINGS = [
   { sym:'DHHF.AX', name:'Diversified All Growth',   units:807,  avgCost:37.06  },
@@ -2455,385 +2320,239 @@ const SK_HOLDINGS = [
   { sym:'GOLD.AX', name:'BetaShares Gold Bullion',   units:40,   avgCost:21.20  },
 ];
 
-let skLiveData = {};
+let skLiveData  = {};
+let skChartInst = null;
+let skActiveSym = null;
+let skChartRange = { range:'1mo', interval:'1d' };
+
+// Yahoo Finance fetch — try direct first (Yahoo allows browser CORS),
+// then query2 mirror, then proxy fallbacks
+async function skYahooFetch(sym, params, timeoutMs=10000) {
+  const hosts = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
+  ];
+  // 1. Try direct
+  for (const url of hosts) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
+    } catch(e) {}
+  }
+  // 2. Try via proxies (use first host only)
+  for (const makeProxy of PROXIES) {
+    try {
+      const r = await fetch(makeProxy(hosts[0]), { signal: AbortSignal.timeout(timeoutMs) });
+      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function skFetchTicker(sym) {
+  const text = await skYahooFetch(sym, 'interval=1d&range=2d');
+  if (!text) return null;
+  try {
+    const d = JSON.parse(text);
+    const m = d.chart.result[0].meta;
+    return { price: m.regularMarketPrice, prev: m.chartPreviousClose };
+  } catch(e) { return null; }
+}
+
+async function skFetchHistory(sym, range, interval) {
+  const text = await skYahooFetch(sym, `interval=${interval}&range=${range}`, 14000);
+  if (!text) return null;
+  try {
+    const d      = JSON.parse(text);
+    const result = d.chart.result[0];
+    const times  = result.timestamp;
+    const closes = result.indicators.quote[0].close;
+    const pts    = [];
+    for (let i = 0; i < times.length; i++) {
+      if (closes[i] != null) pts.push({ x: new Date(times[i]*1000), y: closes[i] });
+    }
+    return pts;
+  } catch(e) { return null; }
+}
 
 function skFmt(n, dp=2)  { if (n==null||isNaN(n)) return '—'; return n.toLocaleString('en-AU',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
 function skFmtCur(n)     { if (n==null||isNaN(n)) return '—'; return (n<0?'-$':'$')+Math.abs(n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-async function skWorkerFetch(path, timeoutMs=14000) {
-  const url = RT_CONFIG.WORKER_URL + path;
-  try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-    if (!r.ok) throw new Error(`Worker ${r.status}`);
-    return await r.json();
-  } catch(e) {
-    console.warn('skWorkerFetch failed:', path.slice(0,60), e.message);
-    return null;
-  }
-}
+function skRenderTable() {
+  const tbody = document.getElementById('sk-holdings-body');
+  let totalValue=0, totalCost=0, totalDay=0;
+  let loadedCount=0;
 
-async function skFetchAllQuotes() {
-  const syms = SK_HOLDINGS.map(h => h.sym).join(',');
-  const data = await skWorkerFetch(`/quote?symbols=${encodeURIComponent(syms)}`);
-  if (!data?.quoteResponse?.result?.length) return {};
-  const map = {};
-  data.quoteResponse.result.forEach(q => {
-    const price = q.regularMarketPrice;
-    const prev  = q.regularMarketPreviousClose ?? price;
-    if (price) map[q.symbol] = { price, prev };
-  });
-  return map;
-}
-
-async function skFetchTicker(h) {
-  const data = await skWorkerFetch(`/quote?symbols=${encodeURIComponent(h.sym)}`, 12000);
-  const q    = data?.quoteResponse?.result?.[0];
-  if (!q?.regularMarketPrice) return null;
-  return { price: q.regularMarketPrice, prev: q.regularMarketPreviousClose ?? q.regularMarketPrice };
-}
-
-function skRenderMovers() {
-  const grid = document.getElementById('sk-movers-grid');
-  if (!grid) return;
-  grid.innerHTML = SK_HOLDINGS.map(h => {
-    const d      = skLiveData[h.sym];
-    const dayPct = d ? ((d.price - d.prev) / d.prev) * 100 : null;
-    const dayAbs = d ? h.units * (d.price - d.prev) : null;
-    const dir    = dayPct == null ? 'loading' : dayPct > 0.05 ? 'up' : dayPct < -0.05 ? 'down' : 'flat';
-    const sym    = h.sym.replace('.AX','');
-    return '<div class="sk-mover-card ' + dir + '">' +
-      '<div class="sk-mover-sym">' + sym + '</div>' +
-      '<div class="sk-mover-pct ' + dir + '">' + (dayPct != null ? (dayPct>=0?'+':'') + dayPct.toFixed(2) + '%' : '…') + '</div>' +
-      '<div class="sk-mover-price">' + (d ? '$'+skFmt(d.price) : '—') + '</div>' +
-      (dayAbs != null ? '<div class="sk-mover-abs ' + dir + '">' + (dayAbs>=0?'+':'') + skFmtCur(dayAbs) + '</div>' : '') +
-      '</div>';
-  }).join('');
-}
-
-function skRenderSummary() {
-  let totalValue=0, totalCost=0, totalDay=0, loaded=0;
-  SK_HOLDINGS.forEach(h => {
-    const d = skLiveData[h.sym];
-    const cost = h.units * h.avgCost;
+  const rows = SK_HOLDINGS.map(h => {
+    const d       = skLiveData[h.sym];
+    const cost    = h.units * h.avgCost;
+    const value   = d ? h.units * d.price : null;
+    const pnl     = value != null ? value - cost : null;
+    const pnlPct  = pnl  != null ? (pnl / cost) * 100 : null;
+    const dayChg  = d ? h.units * (d.price - d.prev) : null;
+    const dayPct  = d ? ((d.price - d.prev) / d.prev) * 100 : null;
     totalCost += cost;
-    if (d) { totalValue += h.units * d.price; totalDay += h.units * (d.price - d.prev); loaded++; }
+    if (value != null)  { totalValue += value;  loadedCount++; }
+    if (dayChg != null)   totalDay  += dayChg;
+    return { h, d, cost, value, pnl, pnlPct, dayChg, dayPct };
   });
+
+  const maxAbsPnl = Math.max(...rows.map(r => r.pnl != null ? Math.abs(r.pnl) : 0), 1);
+
+  tbody.innerHTML = rows.map(({ h, d, value, pnl, pnlPct, dayChg, dayPct }) => {
+    const isUp  = pnl  != null && pnl  >= 0;
+    const dayUp = dayChg != null && dayChg >= 0;
+    const barW  = pnl != null ? (Math.abs(pnl) / maxAbsPnl * 100).toFixed(1) : 0;
+    const active = skActiveSym === h.sym ? 'class="active"' : '';
+    return `<tr ${active} onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
+      <td><div class="sk-ticker-sym">${h.sym.replace('.AX','')}</div><div class="sk-ticker-full">${escHtml(h.name)}</div></td>
+      <td>${h.units.toLocaleString()}</td>
+      <td>$${skFmt(h.avgCost)}</td>
+      <td>${d ? '$'+skFmt(d.price) : '<span style="color:#7a95aa">…</span>'}</td>
+      <td>${dayChg != null ? `<span class="sk-pill ${dayUp?'up':'down'}">${dayUp?'▲':'▼'} ${skFmt(Math.abs(dayPct))}%</span>` : '—'}</td>
+      <td>${value != null ? '$'+skFmt(value) : '—'}</td>
+      <td class="${pnl != null ? (isUp?'sk-up':'sk-down') : ''}">${skFmtCur(pnl)}</td>
+      <td class="${pnlPct != null ? (isUp?'sk-up':'sk-down') : ''}">${pnlPct != null ? (isUp?'+':'')+skFmt(pnlPct)+'%' : '—'}</td>
+      <td style="min-width:110px">${pnl != null ? `<div style="font-family:var(--font-mono);font-size:0.68rem;color:${isUp?'#0d9e6e':'#e03050'}">${isUp?'+':'-'}${skFmt(Math.abs(pnlPct))}%</div><div class="sk-pnl-bar-wrap"><div class="sk-pnl-bar ${isUp?'up':'down'}" style="width:${barW}%"></div></div>` : '—'}</td>
+    </tr>`;
+  }).join('');
+
   const totalPnl    = totalValue - totalCost;
   const totalPnlPct = totalCost ? (totalPnl / totalCost) * 100 : 0;
   const vUp = totalPnl >= 0, dUp = totalDay >= 0;
 
-  document.getElementById('sk-s-value').textContent     = loaded ? '$'+skFmt(totalValue) : '—';
-  document.getElementById('sk-s-value-sub').textContent = loaded < SK_HOLDINGS.length ? loaded+'/'+SK_HOLDINGS.length+' loaded' : 'end of day';
-  document.getElementById('sk-s-day').textContent       = loaded ? skFmtCur(totalDay) : '—';
-  document.getElementById('sk-s-day').className         = 'sk-summary-value '+(dUp?'up':'down');
-  document.getElementById('sk-s-day-sub').textContent   = loaded ? (dUp?'▲':'▼')+' today' : 'loading…';
-  document.getElementById('sk-s-pnl').textContent       = loaded ? skFmtCur(totalPnl) : '—';
-  document.getElementById('sk-s-pnl').className         = 'sk-summary-value '+(vUp?'up':'down');
-  document.getElementById('sk-s-pnl-sub').textContent   = loaded ? (vUp?'+':'')+skFmt(totalPnlPct)+'% total return' : '';
-  document.getElementById('sk-s-cost').textContent      = '$'+skFmt(totalCost);
-}
+  // Show allocation loading note if prices not yet loaded
+  const sub = loadedCount < SK_HOLDINGS.length ? `${loadedCount}/${SK_HOLDINGS.length} prices loaded` : '';
+  document.getElementById('sk-s-value').textContent     = '$' + skFmt(totalValue);
+  document.getElementById('sk-s-value-sub').textContent = sub || 'live market value';
+  document.getElementById('sk-s-pnl').textContent       = skFmtCur(totalPnl);
+  document.getElementById('sk-s-pnl').className         = 'sk-summary-value ' + (vUp ? 'up' : 'down');
+  document.getElementById('sk-s-pnl-sub').textContent   = (vUp?'+':'') + skFmt(totalPnlPct) + '% total return';
+  document.getElementById('sk-s-day').textContent       = skFmtCur(totalDay);
+  document.getElementById('sk-s-day').className         = 'sk-summary-value ' + (dUp ? 'up' : 'down');
+  document.getElementById('sk-s-day-sub').textContent   = (dUp?'▲':'▼') + ' today vs prev close';
+  document.getElementById('sk-s-cost').textContent      = '$' + skFmt(totalCost);
 
-function skRenderTable() {
-  const tbody = document.getElementById('sk-holdings-body');
-  if (!tbody) return;
-  tbody.innerHTML = SK_HOLDINGS.map(h => {
-    const d      = skLiveData[h.sym];
-    const cost   = h.units * h.avgCost;
-    const value  = d ? h.units * d.price : null;
-    const pnl    = value != null ? value - cost : null;
-    const pnlPct = pnl  != null ? (pnl / cost) * 100 : null;
-    const dayPct = d    ? ((d.price - d.prev) / d.prev) * 100 : null;
-    const dayChg = d    ? h.units * (d.price - d.prev) : null;
-    const isUp   = pnl  != null && pnl  >= 0;
-    const dayUp  = dayChg != null && dayChg >= 0;
-    return '<tr>' +
-      '<td><div class="sk-ticker-sym">' + h.sym.replace('.AX','') + '</div><div class="sk-ticker-full">' + escHtml(h.name) + '</div></td>' +
-      '<td>' + h.units.toLocaleString() + '</td>' +
-      '<td>$' + skFmt(h.avgCost) + '</td>' +
-      '<td>' + (d ? '$'+skFmt(d.price) : '<span style="color:#7a95aa">…</span>') + '</td>' +
-      '<td>' + (dayPct != null ? '<span class="sk-pill '+(dayUp?'up':'down')+'">'+(dayUp?'▲':'▼')+' '+skFmt(Math.abs(dayPct))+'%</span>' : '—') + '</td>' +
-      '<td>' + (value != null ? '$'+skFmt(value) : '—') + '</td>' +
-      '<td class="' + (pnl != null?(isUp?'sk-up':'sk-down'):'') + '">' + skFmtCur(pnl) + '</td>' +
-      '<td class="' + (pnlPct != null?(isUp?'sk-up':'sk-down'):'') + '">' + (pnlPct != null?(isUp?'+':'')+skFmt(pnlPct)+'%':'—') + '</td>' +
-      '</tr>';
-  }).join('');
+  skRenderAlloc(totalValue || totalCost);
 }
 
 function skRenderAlloc(totalValue) {
   const grid = document.getElementById('sk-alloc-grid');
-  if (!grid || !totalValue) return;
+  if (!totalValue) return;
   const sorted = [...SK_HOLDINGS]
     .map(h => { const d=skLiveData[h.sym]; return { ...h, val: d ? h.units*d.price : h.units*h.avgCost, hasLive: !!d }; })
     .sort((a,b) => b.val - a.val);
   grid.innerHTML = sorted.map(h => {
     const pct = (h.val / totalValue * 100).toFixed(1);
-    return '<div class="sk-alloc-card">' +
-      '<div class="sk-alloc-ticker">' + h.sym.replace('.AX','') + '</div>' +
-      '<div class="sk-alloc-bar-track"><div class="sk-alloc-bar-fill" style="width:'+pct+'%"></div></div>' +
-      '<div class="sk-alloc-pct">' + pct + '%' + (!h.hasLive?' <span style="color:#7a95aa;font-size:0.6rem">(est)</span>':'') + '</div>' +
-      '<div class="sk-alloc-val">$' + skFmt(h.val) + '</div></div>';
+    return `<div class="sk-alloc-card ${skActiveSym===h.sym?'active':''}" onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
+      <div class="sk-alloc-ticker">${h.sym.replace('.AX','')}</div>
+      <div class="sk-alloc-bar-track"><div class="sk-alloc-bar-fill" style="width:${pct}%"></div></div>
+      <div class="sk-alloc-pct">${pct}%${!h.hasLive ? ' <span style="color:#7a95aa;font-size:0.6rem">(est)</span>' : ''}</div>
+      <div class="sk-alloc-val">$${skFmt(h.val)}</div>
+    </div>`;
   }).join('');
 }
 
-async function skFetchCommentary() {
-  const btn         = document.getElementById('sk-commentary-btn');
-  const placeholder = document.getElementById('sk-commentary-placeholder');
-  const textEl      = document.getElementById('sk-commentary-text');
-  const spinner     = document.getElementById('sk-commentary-spinner');
-  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
-  placeholder.style.display = 'none';
-  textEl.style.display      = 'none';
-  spinner.style.display     = 'block';
+async function skSelectTicker(sym, name, avgCost) {
+  skActiveSym = sym;
+  skRenderTable();
+  document.getElementById('sk-chart-ticker-label').innerHTML = sym.replace('.AX','') + ` <span>${escHtml(name)}</span>`;
+  const note = document.getElementById('sk-cost-basis-note');
+  note.style.display = 'block';
+  note.textContent   = `— avg cost $${avgCost.toFixed(2)} per unit`;
+  await skDrawChart(sym, avgCost);
+}
 
-  try {
-    const portfolioLines = SK_HOLDINGS.map(h => {
-      const d = skLiveData[h.sym];
-      const sym = h.sym.replace('.AX','');
-      if (!d) return sym + ': no data';
-      const dayPct = ((d.price - d.prev) / d.prev * 100).toFixed(2);
-      const dir = parseFloat(dayPct) >= 0 ? '+' : '';
-      return sym + ' (' + h.name + '): ' + dir + dayPct + '% today, price $' + d.price.toFixed(2);
-    }).join('\n');
-
-    const headlines = [];
-    const feedUrls = [
-      'https://www.theguardian.com/australia-news/rss',
-      'https://www.abc.net.au/news/feed/51120/rss.xml',
-    ];
-    for (const feedUrl of feedUrls) {
-      try {
-        const r = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl),
-          { signal: AbortSignal.timeout(8000) });
-        if (r.ok) {
-          const txt = await r.text();
-          const doc = new DOMParser().parseFromString(txt, 'text/xml');
-          doc.querySelectorAll('item').forEach((item, i) => {
-            if (i < 6) headlines.push(item.querySelector('title')?.textContent?.trim() || '');
-          });
-        }
-      } catch(e) { /* skip */ }
-    }
-
-    const headlineBlock = headlines.length
-      ? 'Recent Australian news headlines:\n' + headlines.filter(Boolean).slice(0,10).map(h => '- ' + h).join('\n')
-      : 'No headlines available.';
-
-    const prompt = 'You are a brief financial analyst. Here is my ASX ETF portfolio\'s daily performance:\n\n' +
-      portfolioLines + '\n\n' + headlineBlock +
-      '\n\nWrite exactly 2 short paragraphs (4-5 sentences total) interpreting today\'s moves. ' +
-      'Focus on macro or news factors likely driving the changes. Be specific but concise. ' +
-      'Do not use bullet points. Do not give investment advice.';
-
-    const data = await skWorkerFetch('/ai?prompt=' + encodeURIComponent(prompt), 30000);
-    spinner.style.display = 'none';
-
-    if (data?.response) {
-      const paras = data.response.split('\n').filter(p => p.trim().length > 0);
-      textEl.innerHTML = paras.map(p => '<p>' + escHtml(p) + '</p>').join('') +
-        '<div class="sk-commentary-sources">Sources: Guardian AU, ABC News · Model: Llama via Cloudflare Workers AI</div>';
-      textEl.style.display = 'block';
-    } else {
-      placeholder.innerHTML = '<span style="font-size:1.5rem;opacity:0.3">⚠️</span><span>Commentary unavailable — check your Worker has the AI binding enabled.</span>';
-      placeholder.style.display = 'flex';
-    }
-  } catch(e) {
-    spinner.style.display = 'none';
-    placeholder.innerHTML = '<span style="font-size:1.5rem;opacity:0.3">⚠️</span><span>Error: ' + escHtml(e.message) + '</span>';
-    placeholder.style.display = 'flex';
+async function skSetRange(range, interval, btn) {
+  document.querySelectorAll('.sk-range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  skChartRange = { range, interval };
+  if (skActiveSym) {
+    const h = SK_HOLDINGS.find(h => h.sym === skActiveSym);
+    await skDrawChart(skActiveSym, h?.avgCost);
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Regenerate'; }
+}
+
+async function skDrawChart(sym, avgCost) {
+  const ph = document.getElementById('sk-chart-placeholder');
+  ph.innerHTML = `<span class="sk-loading-spinner"></span><span>Loading ${sym.replace('.AX','')}…</span>`;
+  ph.style.display = 'flex';
+
+  const pts = await skFetchHistory(sym, skChartRange.range, skChartRange.interval);
+  if (!pts || !pts.length) {
+    ph.innerHTML = '<span class="ph-icon">⚠️</span>Could not load chart data'; return;
+  }
+  ph.style.display = 'none';
+
+  const lastPrice = pts[pts.length-1].y;
+  const isProfit  = avgCost != null && lastPrice >= avgCost;
+  const lineColor = isProfit ? '#0d9e6e' : '#e03050';
+
+  if (skChartInst) { skChartInst.destroy(); skChartInst = null; }
+  const ctx  = document.getElementById('sk-chart-canvas').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 260);
+  grad.addColorStop(0, isProfit ? 'rgba(13,158,110,0.15)' : 'rgba(224,48,80,0.12)');
+  grad.addColorStop(1, isProfit ? 'rgba(13,158,110,0.01)' : 'rgba(224,48,80,0.01)');
+
+  skChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [
+      { label: sym.replace('.AX',''), data: pts, borderColor: lineColor, borderWidth: 2,
+        backgroundColor: grad, fill: true, tension: 0.35, pointRadius: 0,
+        pointHoverRadius: 5, pointHoverBackgroundColor: lineColor, pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+      ...(avgCost ? [{
+        label: 'Avg Cost', data: pts.map(p => ({ x: p.x, y: avgCost })),
+        borderColor: 'rgba(224,123,32,0.6)', borderWidth: 1.5, borderDash:[5,4],
+        backgroundColor:'transparent', fill:false, pointRadius:0, tension:0
+      }] : [])
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'#fff', borderColor:'#d4e8f5', borderWidth:1.5,
+          titleColor:'#7a95aa', bodyColor:'#1c2b3a',
+          titleFont:{ family:'DM Mono', size:10 }, bodyFont:{ family:'DM Mono', size:12, weight:'500' },
+          padding:10,
+          callbacks:{
+            title: items => new Date(items[0].parsed.x).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}),
+            label: item  => item.datasetIndex===0 ? ` Price: $${item.parsed.y.toFixed(2)}` : `  Cost: $${item.parsed.y.toFixed(2)}`,
+          }
+        }
+      },
+      scales:{
+        x:{ type:'time', grid:{color:'rgba(0,0,0,0.04)'}, border:{color:'rgba(0,0,0,0.06)'},
+            ticks:{color:'#7a95aa', font:{family:'DM Mono',size:9}, maxTicksLimit:8} },
+        y:{ position:'right', grid:{color:'rgba(0,0,0,0.04)'}, border:{color:'rgba(0,0,0,0.06)'},
+            ticks:{color:'#7a95aa', font:{family:'DM Mono',size:9}, callback: v=>'$'+v.toFixed(2)} },
+      }
+    }
+  });
 }
 
 async function skLoadAll() {
   const btn = document.getElementById('sk-refresh-btn');
   if (btn) btn.classList.add('spinning');
   document.getElementById('sk-error-bar').style.display = 'none';
-  const commBtn = document.getElementById('sk-commentary-btn');
-  if (commBtn) { commBtn.disabled = false; commBtn.textContent = 'Generate'; }
-  document.getElementById('sk-commentary-placeholder').style.display = 'flex';
-  document.getElementById('sk-commentary-text').style.display = 'none';
 
-  const batchMap = await skFetchAllQuotes();
-  SK_HOLDINGS.forEach(h => { if (batchMap[h.sym]) skLiveData[h.sym] = batchMap[h.sym]; });
-  skRenderMovers();
-  skRenderSummary();
+  const results = await Promise.all(SK_HOLDINGS.map(async h => ({ sym: h.sym, d: await skFetchTicker(h.sym) })));
+  let failed = 0;
+  results.forEach(r => { if (r.d) skLiveData[r.sym] = r.d; else failed++; });
   skRenderTable();
 
-  const missing = SK_HOLDINGS.filter(h => !batchMap[h.sym]);
-  if (missing.length && missing.length < SK_HOLDINGS.length) {
-    for (const h of missing) {
-      await new Promise(r => setTimeout(r, 400));
-      const d = await skFetchTicker(h);
-      if (d) { skLiveData[h.sym] = d; skRenderMovers(); skRenderSummary(); skRenderTable(); }
-    }
-  }
-
-  const loaded = SK_HOLDINGS.filter(h => skLiveData[h.sym]);
-  const totalValue = loaded.reduce((s,h) => s + h.units * skLiveData[h.sym].price, 0);
-  skRenderAlloc(totalValue);
-
-  const failed = SK_HOLDINGS.length - loaded.length;
   if (failed > 0) {
     const bar = document.getElementById('sk-error-bar');
     bar.style.display = 'block';
-    bar.textContent   = '\u26A0\uFE0F ' + failed + ' ticker(s) failed to load.';
+    bar.textContent   = `⚠️ ${failed} ticker(s) failed to load. CORS proxy may be rate-limited — try Refresh.`;
   }
+
   const ts = document.getElementById('sk-last-updated');
-  if (ts) ts.textContent = 'EOD \u00B7 ' + new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+  if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   if (btn) btn.classList.remove('spinning');
 }
 
-// ============================================================
-//  SCRIBE — AI note categoriser
-// ============================================================
-const SCRIBE_VAULT_STRUCTURE =
-  '01_Writing\n' +
-  '  01_Reflections — personal, journalistic, self-reflective writing\n' +
-  '  02_Songs_and_Poems — any poem, song lyric, or verse\n' +
-  '  03_Short_Stories — fiction, narrative stories\n' +
-  '  04_Treatises — structured academic or intellectual writing; political/social commentary\n' +
-  '\n' +
-  '02_Learning\n' +
-  '  01_Coding — code snippets, programming resources, computer science notes\n' +
-  '\n' +
-  '03_Adventures — hiking destinations, travel locations, trip notes\n' +
-  '\n' +
-  '04_Recipes — any food recipe';
-
-(function initScribe() {
-  const ta = document.getElementById('scribe-textarea');
-  if (ta) ta.addEventListener('input', function() {
-    document.getElementById('scribe-char-count').textContent = this.value.length.toLocaleString() + ' chars';
-  });
-})();
-
-async function scribeSuggest() {
-  const text = document.getElementById('scribe-textarea').value.trim();
-  if (!text) return;
-  const btn      = document.getElementById('scribe-suggest-btn');
-  const inner    = document.getElementById('scribe-btn-inner');
-  const errorEl  = document.getElementById('scribe-error');
-  const resultEl = document.getElementById('scribe-result');
-  errorEl.style.display  = 'none';
-  resultEl.style.display = 'none';
-  btn.disabled = true;
-  inner.innerHTML = '<span class="scribe-spinner"></span> Thinking\u2026';
-
-  const excerpt = text.slice(0, 2000);
-  const prompt =
-    'You are a file organiser for an Obsidian vault. Given a note, suggest the single best folder path.\n\n' +
-    'Vault structure:\n' + SCRIBE_VAULT_STRUCTURE + '\n\n' +
-    'Rules:\n' +
-    '- Return ONLY a JSON object with keys: "path" (string, e.g. "01_Writing/01_Reflections"), ' +
-    '"isNew" (boolean — true if recommending a folder not in the list), ' +
-    '"reasoning" (one sentence explaining why).\n' +
-    '- If the note fits an existing folder, use it exactly.\n' +
-    '- If nothing fits well, recommend a sensible new path and set isNew true.\n' +
-    '- Output JSON only. No markdown, no explanation outside the JSON.\n\n' +
-    'Note:\n"""\n' + excerpt + '\n"""';
-
-  try {
-    const data = await skWorkerFetch('/ai?prompt=' + encodeURIComponent(prompt), 25000);
-    if (!data?.response) throw new Error('No response from AI — is the Worker AI binding enabled?');
-
-    let raw = data.response.trim();
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Could not parse AI response: ' + raw.slice(0,80));
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    document.getElementById('scribe-folder-path').textContent = parsed.path || '—';
-    document.getElementById('scribe-folder-path').className   = 'scribe-folder-path' + (parsed.isNew ? ' scribe-folder-new' : '');
-    document.getElementById('scribe-reasoning').textContent   = parsed.reasoning || '';
-    resultEl.style.display = 'block';
-  } catch(e) {
-    errorEl.textContent   = '\u26A0\uFE0F ' + e.message;
-    errorEl.style.display = 'block';
-    console.error('scribeSuggest:', e);
-  }
-  btn.disabled = false;
-  inner.innerHTML = '\u2736 Suggest folder';
-}
-
-function scribeClear() {
-  document.getElementById('scribe-textarea').value = '';
-  document.getElementById('scribe-char-count').textContent = '0 chars';
-  document.getElementById('scribe-result').style.display  = 'none';
-  document.getElementById('scribe-error').style.display   = 'none';
-}
-
-function scribeCopyPath() {
-  const path = document.getElementById('scribe-folder-path').textContent;
-  navigator.clipboard.writeText(path).then(() => {
-    const btn = document.querySelector('.scribe-copy-btn');
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 1400);
-  });
-}
-
-
-// ============================================================
-//  DEBUG — visible network test panel
-// ============================================================
-async function runDebugTests() {
-  const log = document.getElementById('debug-log');
-  const line = (msg, ok) => {
-    const el = document.createElement('div');
-    el.style.color = ok === true ? '#3fb950' : ok === false ? '#f85149' : '#e6edf3';
-    el.textContent = (ok === true ? '✅ ' : ok === false ? '❌ ' : '⏳ ') + msg;
-    log.appendChild(el);
-    return el;
-  };
-  log.innerHTML = '';
-
-  const FEEDS_TO_TEST = [
-    { label: 'Guardian AU',    url: 'https://www.theguardian.com/australia-news/rss' },
-    { label: 'ABC AU',         url: 'https://www.abc.net.au/news/feed/51120/rss.xml' },
-    { label: 'BBC',            url: 'https://feeds.bbci.co.uk/news/rss.xml' },
-    { label: 'News.com.au',    url: 'https://www.news.com.au/content-feeds/latest-news-national/' },
-    { label: 'Politico',       url: 'https://rss.politico.com/politics-news.xml' },
-    { label: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
-    { label: 'Abhayagiri RSS', url: 'https://www.abhayagiri.org/talks/feed' },
-    { label: 'Dhammatalks',    url: 'https://www.dhammatalks.org/audio/morning/' },
-    { label: 'Yahoo v6 quote',  url: 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=DHHF.AX&fields=regularMarketPrice,regularMarketPreviousClose' },
-    { label: 'Yahoo v8 chart',  url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
-  ];
-  const PROXY_MAKERS = [
-    { name: 'direct',         fn: u => u },
-    { name: 'codetabs',       fn: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}` },
-    { name: 'allorigins/get', fn: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
-    { name: 'corsproxy.io',   fn: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}` },
-  ];
-  const tests = [];
-  for (const feed of FEEDS_TO_TEST) {
-    for (const proxy of PROXY_MAKERS) {
-      tests.push({ name: `${proxy.name}: ${feed.label}`, url: proxy.fn(feed.url), direct: true, expectJson: proxy.json || feed.label.startsWith('Yahoo') });
-    }
-  }
-
-  for (const t of tests) {
-    const el = line(`Testing: ${t.name}…`, null);
-    try {
-      const r = await fetch(t.url, { signal: AbortSignal.timeout(8000) });
-      if (!r.ok) { el.textContent = `❌ ${t.name} — HTTP ${r.status}`; el.style.color='#f85149'; continue; }
-      let body;
-      if (t.expectJson) {
-        const j = await r.json();
-        // rss2json: check status field; allorigins: check contents; yahoo: check chart
-        if (t.url.includes('rss2json') && j.status !== 'ok') throw new Error('rss2json status: ' + j.status + ' — ' + (j.message||''));
-        body = JSON.stringify(j).substring(0, 80);
-      } else {
-        body = await r.text();
-      }
-      const len = typeof body === 'string' ? body.length : 0;
-      if (len < 50) { el.textContent = `❌ ${t.name} — response too short (${len} chars)`; el.style.color='#f85149'; }
-      else { el.textContent = `✅ ${t.name} — ${len} chars`; el.style.color='#3fb950'; }
-    } catch(e) {
-      el.textContent = `❌ ${t.name} — ${e.message}`;
-      el.style.color = '#f85149';
-    }
-  }
-}
 </script>
 </body>
 </html>
