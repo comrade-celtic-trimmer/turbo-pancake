@@ -1634,8 +1634,34 @@ async function loadTalks(source) {
   allTalks = [];
 
   try {
-    const raw = await fetchWithFallback(src.archiveUrl, 14000);
-    allTalks  = src.type === 'scrape' ? parseDhammaTalks(raw) : parseAbhayagiriRSS(raw);
+    let raw;
+    if (src.type === 'rss') {
+      // For RSS: try rss2json first, then raw proxy
+      try {
+        const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.archiveUrl)}&count=50`;
+        const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
+        const j   = await r.json();
+        if (j.status === 'ok' && j.items?.length) {
+          allTalks = j.items.map(item => {
+            const mp3 = item.enclosure?.link || item.link || '';
+            return {
+              title:   item.title || 'Dharma Talk',
+              mp3:     mp3,
+              dateStr: item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU',{year:'numeric',month:'long',day:'numeric'}) : '',
+              teacher: item.author || 'Abhayagiri',
+            };
+          }).filter(t => t.mp3);
+        } else throw new Error('rss2json: ' + (j.message||'no items'));
+      } catch(e1) {
+        console.warn('Talks rss2json failed, trying raw:', e1.message);
+        raw      = await fetchWithFallback(src.archiveUrl, 14000);
+        allTalks = parseAbhayagiriRSS(raw);
+      }
+    } else {
+      // HTML scrape for Dhammatalks
+      raw      = await fetchWithFallback(src.archiveUrl, 14000);
+      allTalks = parseDhammaTalks(raw);
+    }
     if (!allTalks.length) throw new Error('No talks found in response');
     const rand = seededRand(todaySeed());
     renderTalk(Math.floor(rand() * allTalks.length));
@@ -1697,13 +1723,30 @@ function buildNewsTabs() {
 async function loadNewsFeed() {
   const grid = document.getElementById('news-grid');
   grid.innerHTML = '<div class="news-loading">⏳ Fetching…</div>';
-  try {
-    const data  = await fetchWithFallback(RSS_FEEDS[activeFeed]);
+
+  const rssUrl = RSS_FEEDS[activeFeed];
+
+  // Strategy 1: rss2json.com — purpose-built RSS→JSON with proper CORS headers
+  async function tryRss2Json() {
+    const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`;
+    const r   = await fetch(api, { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) throw new Error(`rss2json ${r.status}`);
+    const j = await r.json();
+    if (j.status !== 'ok' || !j.items?.length) throw new Error('rss2json: ' + (j.message||'no items'));
+    return j.items.map(item => ({
+      title: item.title || 'Untitled',
+      link:  item.link  || '#',
+      date:  item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
+    }));
+  }
+
+  // Strategy 2: raw RSS via CORS proxy fallback chain, then parse XML
+  async function tryRawProxy() {
+    const data  = await fetchWithFallback(rssUrl, 16000);
     const xml   = new DOMParser().parseFromString(data, 'application/xml');
     const items = Array.from(xml.querySelectorAll('item')).slice(0, 20);
-    if (!items.length) throw new Error('No items');
-
-    grid.innerHTML = items.map(item => {
+    if (!items.length) throw new Error('No items in XML');
+    return items.map(item => {
       const title  = item.querySelector('title')?.textContent?.trim() || 'Untitled';
       const linkEl = item.querySelector('link');
       let link = '#';
@@ -1712,18 +1755,33 @@ async function loadNewsFeed() {
         const ns = linkEl.nextSibling?.nodeValue?.trim();
         link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
       }
-      const pub  = item.querySelector('pubDate')?.textContent || '';
-      const date = pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '';
-      return `<div class="news-card">
-        <a href="${escHtml(link)}" target="_blank" rel="noopener">${escHtml(title)}</a>
-        <div class="news-card-meta">
-          <span class="news-badge">${escHtml(activeFeed)}</span>
-          <span class="news-date">${date}</span>
-        </div>
-      </div>`;
-    }).join('');
+      const pub = item.querySelector('pubDate')?.textContent || '';
+      return {
+        title, link,
+        date: pub ? new Date(pub).toLocaleDateString('en-AU', { month:'short', day:'numeric' }) : '',
+      };
+    });
+  }
+
+  try {
+    let items;
+    try       { items = await tryRss2Json(); }
+    catch(e1) {
+      console.warn('rss2json failed, trying raw proxy:', e1.message);
+      items = await tryRawProxy();
+    }
+
+    grid.innerHTML = items.map(item => `<div class="news-card">
+      <a href="${escHtml(item.link)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
+      <div class="news-card-meta">
+        <span class="news-badge">${escHtml(activeFeed)}</span>
+        <span class="news-date">${item.date}</span>
+      </div>
+    </div>`).join('');
   } catch(e) {
-    grid.innerHTML = '<div class="news-error">⚠️ Could not load feed. Try another source or check your connection.</div>';
+    console.error('loadNewsFeed all strategies failed:', e);
+    grid.innerHTML = `<div class="news-error">⚠️ Could not load ${escHtml(activeFeed)} feed.<br>
+      Try another source, or <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">open the feed directly</a>.</div>`;
   }
 }
 
@@ -2267,20 +2325,32 @@ let skChartInst = null;
 let skActiveSym = null;
 let skChartRange = { range:'1mo', interval:'1d' };
 
-async function skTryFetch(url, timeoutMs=9000) {
-  for (const p of PROXIES) {
+// Yahoo Finance fetch — try direct first (Yahoo allows browser CORS),
+// then query2 mirror, then proxy fallbacks
+async function skYahooFetch(sym, params, timeoutMs=10000) {
+  const hosts = [
+    `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?${params}`,
+  ];
+  // 1. Try direct
+  for (const url of hosts) {
     try {
-      const res = await fetch(p(url), { signal: AbortSignal.timeout(timeoutMs) });
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text && text.length > 20) return text;
+      const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
+    } catch(e) {}
+  }
+  // 2. Try via proxies (use first host only)
+  for (const makeProxy of PROXIES) {
+    try {
+      const r = await fetch(makeProxy(hosts[0]), { signal: AbortSignal.timeout(timeoutMs) });
+      if (r.ok) { const t = await r.text(); if (t && t.length > 20) return t; }
     } catch(e) {}
   }
   return null;
 }
 
 async function skFetchTicker(sym) {
-  const text = await skTryFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=2d`);
+  const text = await skYahooFetch(sym, 'interval=1d&range=2d');
   if (!text) return null;
   try {
     const d = JSON.parse(text);
@@ -2290,7 +2360,7 @@ async function skFetchTicker(sym) {
 }
 
 async function skFetchHistory(sym, range, interval) {
-  const text = await skTryFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=${interval}&range=${range}`, 13000);
+  const text = await skYahooFetch(sym, `interval=${interval}&range=${range}`, 14000);
   if (!text) return null;
   try {
     const d      = JSON.parse(text);
