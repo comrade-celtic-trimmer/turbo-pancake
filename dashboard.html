@@ -1709,12 +1709,13 @@ window.navigate = function(page) {
 //  NEWS
 // ============================================================
 const RSS_FEEDS = {
+  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
   'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
-  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
-  'News.com.au': 'https://www.news.com.au/content-feeds/latest-news-national/',
-  'Politico':    'https://rss.politico.com/politics-news.xml',
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
+  'Reuters':     'https://feeds.reuters.com/reuters/topNews',
+  'ABC World':   'https://www.abc.net.au/news/feed/52278/rss.xml',
+  // Politico and News.com.au removed — blocked by codetabs
 };
 let activeFeed  = 'Guardian AU';
 let newsLoaded  = false;
@@ -2290,15 +2291,15 @@ function rtBoot() {
 //  STONKS
 // ============================================================
 const SK_HOLDINGS = [
-  { sym:'DHHF.AX', name:'Diversified All Growth',   units:807,  avgCost:37.06  },
-  { sym:'A200.AX', name:'BetaShares Aus 200',        units:168,  avgCost:137.64 },
-  { sym:'VGS.AX',  name:'Vanguard Global Shares',    units:157,  avgCost:138.54 },
-  { sym:'HACK.AX', name:'BetaShares Cybersecurity',  units:1652, avgCost:14.42  },
-  { sym:'ETHI.AX', name:'BetaShares Global Sust.',   units:1052, avgCost:15.05  },
-  { sym:'NDQ.AX',  name:'BetaShares NASDAQ 100',     units:300,  avgCost:53.65  },
-  { sym:'NAB.AX',  name:'National Australia Bank',   units:218,  avgCost:33.66  },
-  { sym:'SEMI.AX', name:'BetaShares Semiconductors', units:339,  avgCost:10.20  },
-  { sym:'GOLD.AX', name:'BetaShares Gold Bullion',   units:40,   avgCost:21.20  },
+  { sym:'DHHF', stooq:'dhhf.au', name:'Diversified All Growth',   units:807,  avgCost:37.06  },
+  { sym:'A200', stooq:'a200.au', name:'BetaShares Aus 200',        units:168,  avgCost:137.64 },
+  { sym:'VGS',  stooq:'vgs.au',  name:'Vanguard Global Shares',    units:157,  avgCost:138.54 },
+  { sym:'HACK', stooq:'hack.au', name:'BetaShares Cybersecurity',  units:1652, avgCost:14.42  },
+  { sym:'ETHI', stooq:'ethi.au', name:'BetaShares Global Sust.',   units:1052, avgCost:15.05  },
+  { sym:'NDQ',  stooq:'ndq.au',  name:'BetaShares NASDAQ 100',     units:300,  avgCost:53.65  },
+  { sym:'NAB',  stooq:'nab.au',  name:'National Australia Bank',   units:218,  avgCost:33.66  },
+  { sym:'SEMI', stooq:'semi.au', name:'BetaShares Semiconductors', units:339,  avgCost:10.20  },
+  { sym:'GOLD', stooq:'gold.au', name:'BetaShares Gold Bullion',   units:40,   avgCost:21.20  },
 ];
 
 let skLiveData  = {};
@@ -2307,58 +2308,83 @@ let skActiveSym = null;
 let skChartRange = { range:'1mo', interval:'1d' };
 
 // Yahoo Finance fetch — direct is blocked, route through codetabs then allorigins
-async function skYahooFetch(sym, params, timeoutMs=12000) {
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?${params}`;
-  const perTimeout = Math.max(6000, Math.floor(timeoutMs / 2));
+// ── Stooq.com price fetching (free, no auth, codetabs-compatible) ──
+// Quote: https://stooq.com/q/l/?s=SYMBOL&f=sd2t2ohlcv&h&e=csv
+// CSV:   Symbol,Date,Time,Open,High,Low,Close,Volume
+// History: https://stooq.com/q/d/l/?s=SYMBOL&d1=YYYYMMDD&d2=YYYYMMDD&i=d
+// CSV:   Date,Open,High,Low,Close,Volume
 
-  // 1. codetabs proxy
-  try {
-    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
-      { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) {
-      const t = await r.text();
-      if (t && t.length > 20) { console.log('skYahooFetch codetabs OK:', sym); return t; }
-    }
-  } catch(e) { console.warn('skYahooFetch codetabs failed:', sym, e.message); }
-
-  // 2. allorigins /get
-  try {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
-      { signal: AbortSignal.timeout(perTimeout) });
-    if (r.ok) {
-      const j = await r.json();
-      if (j.contents && j.contents.length > 20) { console.log('skYahooFetch allorigins OK:', sym); return j.contents; }
-    }
-  } catch(e) { console.warn('skYahooFetch allorigins failed:', sym, e.message); }
-
-  console.warn('skYahooFetch all strategies failed for:', sym);
-  return null;
+function skParseStooqQuote(csv) {
+  // Returns {price, prev} — stooq only gives latest close, no prev close in quote endpoint
+  // so we fetch 2 rows from history for prev
+  const lines = csv.trim().split('\n').filter(l => l && !l.startsWith('Symbol'));
+  if (!lines.length) return null;
+  const cols = lines[0].split(',');
+  // format: Symbol,Date,Time,Open,High,Low,Close,Volume
+  const close = parseFloat(cols[6]);
+  if (isNaN(close) || close <= 0) return null;
+  return close;
 }
 
-async function skFetchTicker(sym) {
-  const text = await skYahooFetch(sym, 'interval=1d&range=2d');
-  if (!text) return null;
-  try {
-    const d = JSON.parse(text);
-    const m = d.chart.result[0].meta;
-    return { price: m.regularMarketPrice, prev: m.chartPreviousClose };
-  } catch(e) { return null; }
+function skParseStooqHistory(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+  // Skip header row
+  return lines.slice(1).map(line => {
+    const cols = line.split(',');
+    if (cols.length < 5) return null;
+    const dateStr = cols[0]; // YYYY-MM-DD
+    const close   = parseFloat(cols[4]);
+    if (!dateStr || isNaN(close)) return null;
+    return { x: new Date(dateStr), y: close };
+  }).filter(Boolean);
 }
 
-async function skFetchHistory(sym, range, interval) {
-  const text = await skYahooFetch(sym, `interval=${interval}&range=${range}`, 14000);
-  if (!text) return null;
+async function skStooqFetch(url, timeoutMs=12000) {
   try {
-    const d      = JSON.parse(text);
-    const result = d.chart.result[0];
-    const times  = result.timestamp;
-    const closes = result.indicators.quote[0].close;
-    const pts    = [];
-    for (let i = 0; i < times.length; i++) {
-      if (closes[i] != null) pts.push({ x: new Date(times[i]*1000), y: closes[i] });
-    }
-    return pts;
-  } catch(e) { return null; }
+    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(timeoutMs) });
+    if (!r.ok) throw new Error(`codetabs ${r.status}`);
+    const t = await r.text();
+    if (!t || t.length < 10 || t.trim().startsWith('<')) throw new Error('got HTML not CSV');
+    return t;
+  } catch(e) {
+    console.warn('skStooqFetch failed:', url.slice(0,60), e.message);
+    return null;
+  }
+}
+
+async function skFetchTicker(h) {
+  // Fetch last 5 days of history to get current price + previous close
+  const today = new Date();
+  const d2    = today.toISOString().slice(0,10).replace(/-/g,'');
+  const past  = new Date(today - 10 * 86400000).toISOString().slice(0,10).replace(/-/g,'');
+  const url   = `https://stooq.com/q/d/l/?s=${h.stooq}&d1=${past}&d2=${d2}&i=d`;
+  const csv   = await skStooqFetch(url);
+  if (!csv) return null;
+  const pts = skParseStooqHistory(csv);
+  if (pts.length < 1) return null;
+  // Most recent = current price, second most recent = prev close
+  const sorted = pts.sort((a,b) => b.x - a.x);
+  const price  = sorted[0].y;
+  const prev   = sorted.length > 1 ? sorted[1].y : price;
+  return { price, prev };
+}
+
+async function skFetchHistory(h, range, interval) {
+  // Convert Yahoo-style range to date range
+  const today  = new Date();
+  const days   = { '1mo':30, '3mo':90, '6mo':180, '1y':365, '2y':730, '5y':1825 };
+  const nDays  = days[range] || 30;
+  const d2     = today.toISOString().slice(0,10).replace(/-/g,'');
+  const past   = new Date(today - nDays * 86400000).toISOString().slice(0,10).replace(/-/g,'');
+  // stooq interval: d=daily, w=weekly, m=monthly
+  const iMap   = { '1d':'d', '1wk':'w', '1mo':'m' };
+  const si     = iMap[interval] || 'd';
+  const url    = `https://stooq.com/q/d/l/?s=${h.stooq}&d1=${past}&d2=${d2}&i=${si}`;
+  const csv    = await skStooqFetch(url, 14000);
+  if (!csv) return null;
+  return skParseStooqHistory(csv).sort((a,b) => a.x - b.x);
 }
 
 function skFmt(n, dp=2)  { if (n==null||isNaN(n)) return '—'; return n.toLocaleString('en-AU',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
@@ -2391,7 +2417,7 @@ function skRenderTable() {
     const barW  = pnl != null ? (Math.abs(pnl) / maxAbsPnl * 100).toFixed(1) : 0;
     const active = skActiveSym === h.sym ? 'class="active"' : '';
     return `<tr ${active} onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
-      <td><div class="sk-ticker-sym">${h.sym.replace('.AX','')}</div><div class="sk-ticker-full">${escHtml(h.name)}</div></td>
+      <td><div class="sk-ticker-sym">${h.sym}</div><div class="sk-ticker-full">${escHtml(h.name)}</div></td>
       <td>${h.units.toLocaleString()}</td>
       <td>$${skFmt(h.avgCost)}</td>
       <td>${d ? '$'+skFmt(d.price) : '<span style="color:#7a95aa">…</span>'}</td>
@@ -2431,7 +2457,7 @@ function skRenderAlloc(totalValue) {
   grid.innerHTML = sorted.map(h => {
     const pct = (h.val / totalValue * 100).toFixed(1);
     return `<div class="sk-alloc-card ${skActiveSym===h.sym?'active':''}" onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
-      <div class="sk-alloc-ticker">${h.sym.replace('.AX','')}</div>
+      <div class="sk-alloc-ticker">${h.sym}</div>
       <div class="sk-alloc-bar-track"><div class="sk-alloc-bar-fill" style="width:${pct}%"></div></div>
       <div class="sk-alloc-pct">${pct}%${!h.hasLive ? ' <span style="color:#7a95aa;font-size:0.6rem">(est)</span>' : ''}</div>
       <div class="sk-alloc-val">$${skFmt(h.val)}</div>
@@ -2442,7 +2468,7 @@ function skRenderAlloc(totalValue) {
 async function skSelectTicker(sym, name, avgCost) {
   skActiveSym = sym;
   skRenderTable();
-  document.getElementById('sk-chart-ticker-label').innerHTML = sym.replace('.AX','') + ` <span>${escHtml(name)}</span>`;
+  document.getElementById('sk-chart-ticker-label').innerHTML = sym + ` <span>${escHtml(name)}</span>`;
   const note = document.getElementById('sk-cost-basis-note');
   note.style.display = 'block';
   note.textContent   = `— avg cost $${avgCost.toFixed(2)} per unit`;
@@ -2461,10 +2487,11 @@ async function skSetRange(range, interval, btn) {
 
 async function skDrawChart(sym, avgCost) {
   const ph = document.getElementById('sk-chart-placeholder');
-  ph.innerHTML = `<span class="sk-loading-spinner"></span><span>Loading ${sym.replace('.AX','')}…</span>`;
+  ph.innerHTML = `<span class="sk-loading-spinner"></span><span>Loading ${sym}…</span>`;
   ph.style.display = 'flex';
 
-  const pts = await skFetchHistory(sym, skChartRange.range, skChartRange.interval);
+  const h   = SK_HOLDINGS.find(h => h.sym === sym);
+  const pts = await skFetchHistory(h, skChartRange.range, skChartRange.interval);
   if (!pts || !pts.length) {
     ph.innerHTML = '<span class="ph-icon">⚠️</span>Could not load chart data'; return;
   }
@@ -2483,7 +2510,7 @@ async function skDrawChart(sym, avgCost) {
   skChartInst = new Chart(ctx, {
     type: 'line',
     data: { datasets: [
-      { label: sym.replace('.AX',''), data: pts, borderColor: lineColor, borderWidth: 2,
+      { label: sym, data: pts, borderColor: lineColor, borderWidth: 2,
         backgroundColor: grad, fill: true, tension: 0.35, pointRadius: 0,
         pointHoverRadius: 5, pointHoverBackgroundColor: lineColor, pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
       ...(avgCost ? [{
@@ -2523,15 +2550,25 @@ async function skLoadAll() {
   if (btn) btn.classList.add('spinning');
   document.getElementById('sk-error-bar').style.display = 'none';
 
-  const results = await Promise.all(SK_HOLDINGS.map(async h => ({ sym: h.sym, d: await skFetchTicker(h.sym) })));
-  let failed = 0;
-  results.forEach(r => { if (r.d) skLiveData[r.sym] = r.d; else failed++; });
-  skRenderTable();
+  // Fetch in batches of 3 with a small gap — avoids hammering codetabs rate limit
+  const BATCH = 3;
+  const DELAY = 600; // ms between batches
+  const results = [];
+  for (let i = 0; i < SK_HOLDINGS.length; i += BATCH) {
+    const batch = SK_HOLDINGS.slice(i, i + BATCH);
+    const batchResults = await Promise.all(batch.map(async h => ({ sym: h.sym, d: await skFetchTicker(h) })));
+    results.push(...batchResults);
+    // Update table after each batch so user sees progress
+    batchResults.forEach(r => { if (r.d) skLiveData[r.sym] = r.d; });
+    skRenderTable();
+    if (i + BATCH < SK_HOLDINGS.length) await new Promise(r => setTimeout(r, DELAY));
+  }
 
+  const failed = results.filter(r => !r.d).length;
   if (failed > 0) {
     const bar = document.getElementById('sk-error-bar');
     bar.style.display = 'block';
-    bar.textContent   = `⚠️ ${failed} ticker(s) failed to load. CORS proxy may be rate-limited — try Refresh.`;
+    bar.textContent   = `⚠️ ${failed} ticker(s) failed to load — try Refresh.`;
   }
 
   const ts = document.getElementById('sk-last-updated');
