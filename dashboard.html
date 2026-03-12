@@ -1713,9 +1713,7 @@ const RSS_FEEDS = {
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
   'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
-  'SBS News':    'https://www.sbs.com.au/news/feed',
-  'ABC World':   'https://www.abc.net.au/news/feed/52278/rss.xml',
-  // Politico and News.com.au removed — blocked by codetabs
+  'SBS News':    'https://www.sbs.com.au/news/topic/latest/feed',
 };
 let activeFeed  = 'Guardian AU';
 let newsLoaded  = false;
@@ -2291,15 +2289,15 @@ function rtBoot() {
 //  STONKS
 // ============================================================
 const SK_HOLDINGS = [
-  { sym:'DHHF', stooq:'dhhf.au', name:'Diversified All Growth',   units:807,  avgCost:37.06  },
-  { sym:'A200', stooq:'a200.au', name:'BetaShares Aus 200',        units:168,  avgCost:137.64 },
-  { sym:'VGS',  stooq:'vgs.au',  name:'Vanguard Global Shares',    units:157,  avgCost:138.54 },
-  { sym:'HACK', stooq:'hack.au', name:'BetaShares Cybersecurity',  units:1652, avgCost:14.42  },
-  { sym:'ETHI', stooq:'ethi.au', name:'BetaShares Global Sust.',   units:1052, avgCost:15.05  },
-  { sym:'NDQ',  stooq:'ndq.au',  name:'BetaShares NASDAQ 100',     units:300,  avgCost:53.65  },
-  { sym:'NAB',  stooq:'nab.au',  name:'National Australia Bank',   units:218,  avgCost:33.66  },
-  { sym:'SEMI', stooq:'semi.au', name:'BetaShares Semiconductors', units:339,  avgCost:10.20  },
-  { sym:'GOLD', stooq:'gold.au', name:'BetaShares Gold Bullion',   units:40,   avgCost:21.20  },
+  { sym:'DHHF.AX', name:'Diversified All Growth',   units:807,  avgCost:37.06  },
+  { sym:'A200.AX', name:'BetaShares Aus 200',        units:168,  avgCost:137.64 },
+  { sym:'VGS.AX',  name:'Vanguard Global Shares',    units:157,  avgCost:138.54 },
+  { sym:'HACK.AX', name:'BetaShares Cybersecurity',  units:1652, avgCost:14.42  },
+  { sym:'ETHI.AX', name:'BetaShares Global Sust.',   units:1052, avgCost:15.05  },
+  { sym:'NDQ.AX',  name:'BetaShares NASDAQ 100',     units:300,  avgCost:53.65  },
+  { sym:'NAB.AX',  name:'National Australia Bank',   units:218,  avgCost:33.66  },
+  { sym:'SEMI.AX', name:'BetaShares Semiconductors', units:339,  avgCost:10.20  },
+  { sym:'GOLD.AX', name:'BetaShares Gold Bullion',   units:40,   avgCost:21.20  },
 ];
 
 let skLiveData  = {};
@@ -2307,72 +2305,62 @@ let skChartInst = null;
 let skActiveSym = null;
 let skChartRange = { range:'1mo', interval:'1d' };
 
-// Yahoo Finance fetch — direct is blocked, route through codetabs then allorigins
-// ── Stooq.com price fetching (free, no auth, codetabs-compatible) ──
-// Quote: https://stooq.com/q/l/?s=SYMBOL&f=sd2t2ohlcv&h&e=csv
-// CSV:   Symbol,Date,Time,Open,High,Low,Close,Volume
-// History: https://stooq.com/q/d/l/?s=SYMBOL&d1=YYYYMMDD&d2=YYYYMMDD&i=d
-// CSV:   Date,Open,High,Low,Close,Volume
+// ── Yahoo Finance via codetabs proxy ──
+// Quotes: v6/finance/quote batch call (all symbols in one request)
+// History: v8/finance/chart (individual per ticker)
 
-function skParseStooqHistory(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
-  // Skip header row
-  return lines.slice(1).map(line => {
-    const cols = line.split(',');
-    if (cols.length < 5) return null;
-    const dateStr = cols[0]; // YYYY-MM-DD
-    const close   = parseFloat(cols[4]);
-    if (!dateStr || isNaN(close)) return null;
-    return { x: new Date(dateStr), y: close };
-  }).filter(Boolean);
-}
-
-async function skStooqFetch(url, timeoutMs=12000) {
+async function skYFetch(url, timeoutMs=12000) {
+  const proxied = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
   try {
-    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      { signal: AbortSignal.timeout(timeoutMs) });
-    if (!r.ok) throw new Error(`codetabs ${r.status}`);
+    const r = await fetch(proxied, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const t = await r.text();
-    if (!t || t.length < 10 || t.trim().startsWith('<')) throw new Error('got HTML not CSV');
-    return t;
+    if (!t || t.length < 20) throw new Error('empty response');
+    // Detect HTML block page (Yahoo sometimes returns HTML for blocked requests)
+    if (t.trimStart().startsWith('<')) throw new Error('got HTML not JSON');
+    return JSON.parse(t);
   } catch(e) {
-    console.warn('skStooqFetch failed:', url.slice(0,60), e.message);
+    console.warn('skYFetch failed:', url.slice(0,70), e.message);
     return null;
   }
 }
 
+// Batch-load all quotes in a single v6/quote call — much faster, one codetabs hit
+async function skFetchAllQuotes() {
+  const syms = SK_HOLDINGS.map(h => h.sym).join(',');
+  const url  = `https://query1.finance.yahoo.com/v6/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketPreviousClose,shortName`;
+  const data = await skYFetch(url, 14000);
+  if (!data?.quoteResponse?.result?.length) return {};
+  const map = {};
+  data.quoteResponse.result.forEach(q => {
+    const price = q.regularMarketPrice;
+    const prev  = q.regularMarketPreviousClose ?? price;
+    if (price) map[q.symbol] = { price, prev };
+  });
+  return map;
+}
+
 async function skFetchTicker(h) {
-  // Fetch last 5 days of history to get current price + previous close
-  const today = new Date();
-  const d2    = today.toISOString().slice(0,10).replace(/-/g,'');
-  const past  = new Date(today - 10 * 86400000).toISOString().slice(0,10).replace(/-/g,'');
-  const url   = `https://stooq.com/q/d/l/?s=${h.stooq}&d1=${past}&d2=${d2}&i=d`;
-  const csv   = await skStooqFetch(url);
-  if (!csv) return null;
-  const pts = skParseStooqHistory(csv);
-  if (pts.length < 1) return null;
-  // Most recent = current price, second most recent = prev close
-  const sorted = pts.sort((a,b) => b.x - a.x);
-  const price  = sorted[0].y;
-  const prev   = sorted.length > 1 ? sorted[1].y : price;
-  return { price, prev };
+  // Used only for retrying individual tickers that failed in batch
+  const url  = `https://query1.finance.yahoo.com/v6/finance/quote?symbols=${h.sym}&fields=regularMarketPrice,regularMarketPreviousClose`;
+  const data = await skYFetch(url, 12000);
+  const q    = data?.quoteResponse?.result?.[0];
+  if (!q?.regularMarketPrice) return null;
+  return { price: q.regularMarketPrice, prev: q.regularMarketPreviousClose ?? q.regularMarketPrice };
 }
 
 async function skFetchHistory(h, range, interval) {
-  // Convert Yahoo-style range to date range
-  const today  = new Date();
-  const days   = { '1mo':30, '3mo':90, '6mo':180, '1y':365, '2y':730, '5y':1825 };
-  const nDays  = days[range] || 30;
-  const d2     = today.toISOString().slice(0,10).replace(/-/g,'');
-  const past   = new Date(today - nDays * 86400000).toISOString().slice(0,10).replace(/-/g,'');
-  // stooq interval: d=daily, w=weekly, m=monthly
-  const iMap   = { '1d':'d', '1wk':'w', '1mo':'m' };
-  const si     = iMap[interval] || 'd';
-  const url    = `https://stooq.com/q/d/l/?s=${h.stooq}&d1=${past}&d2=${d2}&i=${si}`;
-  const csv    = await skStooqFetch(url, 14000);
-  if (!csv) return null;
-  return skParseStooqHistory(csv).sort((a,b) => a.x - b.x);
+  const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${h.sym}?interval=${interval}&range=${range}`;
+  const data = await skYFetch(url, 16000);
+  const result = data?.chart?.result?.[0];
+  if (!result) return null;
+  const times  = result.timestamp || [];
+  const closes = result.indicators?.quote?.[0]?.close || [];
+  const pts = [];
+  for (let i = 0; i < times.length; i++) {
+    if (closes[i] != null) pts.push({ x: new Date(times[i] * 1000), y: closes[i] });
+  }
+  return pts.length ? pts : null;
 }
 
 function skFmt(n, dp=2)  { if (n==null||isNaN(n)) return '—'; return n.toLocaleString('en-AU',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
@@ -2405,7 +2393,7 @@ function skRenderTable() {
     const barW  = pnl != null ? (Math.abs(pnl) / maxAbsPnl * 100).toFixed(1) : 0;
     const active = skActiveSym === h.sym ? 'class="active"' : '';
     return `<tr ${active} onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
-      <td><div class="sk-ticker-sym">${h.sym}</div><div class="sk-ticker-full">${escHtml(h.name)}</div></td>
+      <td><div class="sk-ticker-sym">${h.sym.replace('.AX','')}</div><div class="sk-ticker-full">${escHtml(h.name)}</div></td>
       <td>${h.units.toLocaleString()}</td>
       <td>$${skFmt(h.avgCost)}</td>
       <td>${d ? '$'+skFmt(d.price) : '<span style="color:#7a95aa">…</span>'}</td>
@@ -2445,7 +2433,7 @@ function skRenderAlloc(totalValue) {
   grid.innerHTML = sorted.map(h => {
     const pct = (h.val / totalValue * 100).toFixed(1);
     return `<div class="sk-alloc-card ${skActiveSym===h.sym?'active':''}" onclick="skSelectTicker('${h.sym}','${escHtml(h.name)}',${h.avgCost})">
-      <div class="sk-alloc-ticker">${h.sym}</div>
+      <div class="sk-alloc-ticker">${h.sym.replace('.AX','')}</div>
       <div class="sk-alloc-bar-track"><div class="sk-alloc-bar-fill" style="width:${pct}%"></div></div>
       <div class="sk-alloc-pct">${pct}%${!h.hasLive ? ' <span style="color:#7a95aa;font-size:0.6rem">(est)</span>' : ''}</div>
       <div class="sk-alloc-val">$${skFmt(h.val)}</div>
@@ -2456,7 +2444,7 @@ function skRenderAlloc(totalValue) {
 async function skSelectTicker(sym, name, avgCost) {
   skActiveSym = sym;
   skRenderTable();
-  document.getElementById('sk-chart-ticker-label').innerHTML = sym + ` <span>${escHtml(name)}</span>`;
+  document.getElementById('sk-chart-ticker-label').innerHTML = sym.replace('.AX','') + ` <span>${escHtml(name)}</span>`;
   const note = document.getElementById('sk-cost-basis-note');
   note.style.display = 'block';
   note.textContent   = `— avg cost $${avgCost.toFixed(2)} per unit`;
@@ -2539,25 +2527,27 @@ async function skLoadAll() {
   if (btn) btn.classList.add('spinning');
   document.getElementById('sk-error-bar').style.display = 'none';
 
-  // Fetch in batches of 3 with a small gap — avoids hammering codetabs rate limit
-  const BATCH = 3;
-  const DELAY = 600; // ms between batches
-  const results = [];
-  for (let i = 0; i < SK_HOLDINGS.length; i += BATCH) {
-    const batch = SK_HOLDINGS.slice(i, i + BATCH);
-    const batchResults = await Promise.all(batch.map(async h => ({ sym: h.sym, d: await skFetchTicker(h) })));
-    results.push(...batchResults);
-    // Update table after each batch so user sees progress
-    batchResults.forEach(r => { if (r.d) skLiveData[r.sym] = r.d; });
-    skRenderTable();
-    if (i + BATCH < SK_HOLDINGS.length) await new Promise(r => setTimeout(r, DELAY));
+  // 1. Try batch quote fetch (single codetabs call for all 9 symbols)
+  const batchMap = await skFetchAllQuotes();
+  SK_HOLDINGS.forEach(h => { if (batchMap[h.sym]) skLiveData[h.sym] = batchMap[h.sym]; });
+  skRenderTable();
+
+  // 2. Retry any that failed individually (in case of partial batch failure)
+  const missing = SK_HOLDINGS.filter(h => !batchMap[h.sym]);
+  if (missing.length && missing.length < SK_HOLDINGS.length) {
+    // Only retry individuals if batch partially worked (not total failure)
+    for (const h of missing) {
+      await new Promise(r => setTimeout(r, 400));
+      const d = await skFetchTicker(h);
+      if (d) { skLiveData[h.sym] = d; skRenderTable(); }
+    }
   }
 
-  const failed = results.filter(r => !r.d).length;
+  const failed = SK_HOLDINGS.filter(h => !skLiveData[h.sym]).length;
   if (failed > 0) {
     const bar = document.getElementById('sk-error-bar');
     bar.style.display = 'block';
-    bar.textContent   = `⚠️ ${failed} ticker(s) failed to load — try Refresh.`;
+    bar.textContent   = `⚠️ ${failed} ticker(s) failed to load. Yahoo Finance may be rate-limiting — try Refresh.`;
   }
 
   const ts = document.getElementById('sk-last-updated');
@@ -2589,8 +2579,8 @@ async function runDebugTests() {
     { label: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
     { label: 'Abhayagiri RSS', url: 'https://www.abhayagiri.org/talks/feed' },
     { label: 'Dhammatalks',    url: 'https://www.dhammatalks.org/audio/morning/' },
-    { label: 'Yahoo q1 DHHF',  url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
-    { label: 'Yahoo q2 DHHF',  url: 'https://query2.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
+    { label: 'Yahoo v6 quote',  url: 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=DHHF.AX&fields=regularMarketPrice,regularMarketPreviousClose' },
+    { label: 'Yahoo v8 chart',  url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
   ];
   const PROXY_MAKERS = [
     { name: 'direct',         fn: u => u },
