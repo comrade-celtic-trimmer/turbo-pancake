@@ -1055,6 +1055,20 @@ td.sk-down { color: var(--sk-down); font-weight: 500; }
       <div class="home-hero-sub">What are we doing today?</div>
     </div>
 
+    <!-- Debug panel (remove once working) -->
+    <div id="debug-panel" style="width:100%;max-width:680px;margin-bottom:18px;background:#1c2330;border:1px solid #2a3441;border-radius:10px;padding:14px 18px;font-family:monospace;font-size:11px;color:#8b949e;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="color:#e6edf3;font-weight:700;font-size:12px;">🔍 Network Debug</span>
+        <button onclick="runDebugTests()" style="background:#2e8de8;border:none;border-radius:5px;padding:3px 10px;color:#fff;font-size:11px;cursor:pointer;">Run Tests</button>
+        <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#7a8899;font-size:14px;cursor:pointer;margin-left:6px;">✕</button>
+      </div>
+      <div id="debug-log" style="line-height:1.8;"></div>
+    </div>
+    <button onclick="document.getElementById('debug-panel').style.display='block';runDebugTests()" 
+      style="width:100%;max-width:680px;margin-bottom:10px;background:transparent;border:1px dashed #c8b89a;border-radius:8px;padding:6px;font-size:11px;color:#8c7d6a;cursor:pointer;font-family:monospace;">
+      🔍 Show network debug
+    </button>
+
     <!-- Daily Sutta card -->
     <div class="sutta-feature-card fade-up" id="sutta-feature-card">
       <div class="sutta-feature-icon">🪷</div>
@@ -1439,19 +1453,32 @@ const SUTTAS = [
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
 
-async function fetchWithFallback(url, timeoutMs = 12000) {
-  for (const makeProxy of PROXIES) {
-    try {
-      const res  = await fetch(makeProxy(url), { signal: AbortSignal.timeout(timeoutMs) });
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text && text.trim().length > 100) return text;
-    } catch(e) { /* try next */ }
-  }
-  throw new Error('All proxies failed for: ' + url);
+async function fetchWithFallback(url, timeoutMs = 14000) {
+  const perTimeout = Math.max(5000, Math.floor(timeoutMs / 4));
+  // 1. Direct (works if target has CORS headers)
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
+  } catch(e) { console.warn('fetchWithFallback direct failed:', e.message); }
+  // 2. corsproxy.io
+  try {
+    const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
+  } catch(e) { console.warn('fetchWithFallback corsproxy failed:', e.message); }
+  // 3. allorigins /get (returns JSON wrapper { contents: "..." })
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) { const j = await r.json(); if (j.contents && j.contents.length > 50) return j.contents; }
+  } catch(e) { console.warn('fetchWithFallback allorigins failed:', e.message); }
+  // 4. codetabs
+  try {
+    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(perTimeout) });
+    if (r.ok) { const t = await r.text(); if (t && t.length > 50) return t; }
+  } catch(e) { console.warn('fetchWithFallback codetabs failed:', e.message); }
+  throw new Error('All CORS strategies failed for: ' + url);
 }
 
 function escHtml(str) {
@@ -2553,6 +2580,56 @@ async function skLoadAll() {
   if (btn) btn.classList.remove('spinning');
 }
 
+
+// ============================================================
+//  DEBUG — visible network test panel
+// ============================================================
+async function runDebugTests() {
+  const log = document.getElementById('debug-log');
+  const line = (msg, ok) => {
+    const el = document.createElement('div');
+    el.style.color = ok === true ? '#3fb950' : ok === false ? '#f85149' : '#e6edf3';
+    el.textContent = (ok === true ? '✅ ' : ok === false ? '❌ ' : '⏳ ') + msg;
+    log.appendChild(el);
+    return el;
+  };
+  log.innerHTML = '';
+
+  const tests = [
+    { name: 'Direct: Guardian AU RSS',          url: 'https://www.theguardian.com/australia-news/rss', direct: true },
+    { name: 'rss2json: Guardian AU',            url: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}&count=3`, direct: true, expectJson: true },
+    { name: 'corsproxy.io: Guardian AU',        url: `https://corsproxy.io/?url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true },
+    { name: 'allorigins /get: Guardian AU',     url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true, expectJson: true },
+    { name: 'codetabs: Guardian AU',            url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true },
+    { name: 'Yahoo Finance direct (DHHF.AX)',   url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d', direct: true, expectJson: true },
+    { name: 'Yahoo Finance query2 (DHHF.AX)',   url: 'https://query2.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d', direct: true, expectJson: true },
+    { name: 'Dhammatalks scrape',               url: 'https://www.dhammatalks.org/audio/morning/', direct: true },
+    { name: 'corsproxy: Dhammatalks',           url: `https://corsproxy.io/?url=${encodeURIComponent('https://www.dhammatalks.org/audio/morning/')}`, direct: true },
+  ];
+
+  for (const t of tests) {
+    const el = line(`Testing: ${t.name}…`, null);
+    try {
+      const r = await fetch(t.url, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) { el.textContent = `❌ ${t.name} — HTTP ${r.status}`; el.style.color='#f85149'; continue; }
+      let body;
+      if (t.expectJson) {
+        const j = await r.json();
+        // rss2json: check status field; allorigins: check contents; yahoo: check chart
+        if (t.url.includes('rss2json') && j.status !== 'ok') throw new Error('rss2json status: ' + j.status + ' — ' + (j.message||''));
+        body = JSON.stringify(j).substring(0, 80);
+      } else {
+        body = await r.text();
+      }
+      const len = typeof body === 'string' ? body.length : 0;
+      if (len < 50) { el.textContent = `❌ ${t.name} — response too short (${len} chars)`; el.style.color='#f85149'; }
+      else { el.textContent = `✅ ${t.name} — ${len} chars`; el.style.color='#3fb950'; }
+    } catch(e) {
+      el.textContent = `❌ ${t.name} — ${e.message}`;
+      el.style.color = '#f85149';
+    }
+  }
+}
 </script>
 </body>
 </html>
