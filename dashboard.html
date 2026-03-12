@@ -2554,17 +2554,30 @@ async function runDebugTests() {
   };
   log.innerHTML = '';
 
-  const tests = [
-    { name: 'Direct: Guardian AU RSS',          url: 'https://www.theguardian.com/australia-news/rss', direct: true },
-    { name: 'rss2json: Guardian AU',            url: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}&count=3`, direct: true, expectJson: true },
-    { name: 'corsproxy.io: Guardian AU',        url: `https://corsproxy.io/?url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true },
-    { name: 'allorigins /get: Guardian AU',     url: `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true, expectJson: true },
-    { name: 'codetabs: Guardian AU',            url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://www.theguardian.com/australia-news/rss')}`, direct: true },
-    { name: 'Yahoo Finance direct (DHHF.AX)',   url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d', direct: true, expectJson: true },
-    { name: 'Yahoo Finance query2 (DHHF.AX)',   url: 'https://query2.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d', direct: true, expectJson: true },
-    { name: 'Dhammatalks scrape',               url: 'https://www.dhammatalks.org/audio/morning/', direct: true },
-    { name: 'corsproxy: Dhammatalks',           url: `https://corsproxy.io/?url=${encodeURIComponent('https://www.dhammatalks.org/audio/morning/')}`, direct: true },
+  const FEEDS_TO_TEST = [
+    { label: 'Guardian AU',    url: 'https://www.theguardian.com/australia-news/rss' },
+    { label: 'ABC AU',         url: 'https://www.abc.net.au/news/feed/51120/rss.xml' },
+    { label: 'BBC',            url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+    { label: 'News.com.au',    url: 'https://www.news.com.au/content-feeds/latest-news-national/' },
+    { label: 'Politico',       url: 'https://rss.politico.com/politics-news.xml' },
+    { label: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+    { label: 'Abhayagiri RSS', url: 'https://www.abhayagiri.org/talks/feed' },
+    { label: 'Dhammatalks',    url: 'https://www.dhammatalks.org/audio/morning/' },
+    { label: 'Yahoo q1 DHHF',  url: 'https://query1.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
+    { label: 'Yahoo q2 DHHF',  url: 'https://query2.finance.yahoo.com/v8/finance/chart/DHHF.AX?interval=1d&range=2d' },
   ];
+  const PROXY_MAKERS = [
+    { name: 'direct',         fn: u => u },
+    { name: 'codetabs',       fn: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}` },
+    { name: 'allorigins/get', fn: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true },
+    { name: 'corsproxy.io',   fn: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}` },
+  ];
+  const tests = [];
+  for (const feed of FEEDS_TO_TEST) {
+    for (const proxy of PROXY_MAKERS) {
+      tests.push({ name: `${proxy.name}: ${feed.label}`, url: proxy.fn(feed.url), direct: true, expectJson: proxy.json || feed.label.startsWith('Yahoo') });
+    }
+  }
 
   for (const t of tests) {
     const el = line(`Testing: ${t.name}…`, null);
