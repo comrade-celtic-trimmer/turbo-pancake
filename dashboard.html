@@ -1713,7 +1713,7 @@ const RSS_FEEDS = {
   'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
   'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
   'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
-  'SBS News':    'https://www.sbs.com.au/news/topic/latest/feed',
+  'SBS News':    'https://www.sbs.com.au/news/feed',
 };
 let activeFeed  = 'Guardian AU';
 let newsLoaded  = false;
@@ -2305,31 +2305,26 @@ let skChartInst = null;
 let skActiveSym = null;
 let skChartRange = { range:'1mo', interval:'1d' };
 
-// ── Yahoo Finance via codetabs proxy ──
-// Quotes: v6/finance/quote batch call (all symbols in one request)
-// History: v8/finance/chart (individual per ticker)
+// ── Yahoo Finance via Cloudflare Worker proxy ──
+// Worker adds browser-like headers + Cloudflare edge caching (5 min)
+// Endpoints: /quote?symbols=...  and  /chart?symbol=...&range=...&interval=...
 
-async function skYFetch(url, timeoutMs=12000) {
-  const proxied = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+async function skWorkerFetch(path, timeoutMs=14000) {
+  const url = RT_CONFIG.WORKER_URL + path;
   try {
-    const r = await fetch(proxied, { signal: AbortSignal.timeout(timeoutMs) });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const t = await r.text();
-    if (!t || t.length < 20) throw new Error('empty response');
-    // Detect HTML block page (Yahoo sometimes returns HTML for blocked requests)
-    if (t.trimStart().startsWith('<')) throw new Error('got HTML not JSON');
-    return JSON.parse(t);
+    const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!r.ok) throw new Error(`Worker ${r.status}`);
+    return await r.json();
   } catch(e) {
-    console.warn('skYFetch failed:', url.slice(0,70), e.message);
+    console.warn('skWorkerFetch failed:', path.slice(0,60), e.message);
     return null;
   }
 }
 
-// Batch-load all quotes in a single v6/quote call — much faster, one codetabs hit
+// Batch-load all quotes in a single Worker call
 async function skFetchAllQuotes() {
   const syms = SK_HOLDINGS.map(h => h.sym).join(',');
-  const url  = `https://query1.finance.yahoo.com/v6/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketPreviousClose,shortName`;
-  const data = await skYFetch(url, 14000);
+  const data = await skWorkerFetch(`/quote?symbols=${encodeURIComponent(syms)}`);
   if (!data?.quoteResponse?.result?.length) return {};
   const map = {};
   data.quoteResponse.result.forEach(q => {
@@ -2341,17 +2336,15 @@ async function skFetchAllQuotes() {
 }
 
 async function skFetchTicker(h) {
-  // Used only for retrying individual tickers that failed in batch
-  const url  = `https://query1.finance.yahoo.com/v6/finance/quote?symbols=${h.sym}&fields=regularMarketPrice,regularMarketPreviousClose`;
-  const data = await skYFetch(url, 12000);
+  // Individual retry for tickers that failed the batch
+  const data = await skWorkerFetch(`/quote?symbols=${encodeURIComponent(h.sym)}`, 12000);
   const q    = data?.quoteResponse?.result?.[0];
   if (!q?.regularMarketPrice) return null;
   return { price: q.regularMarketPrice, prev: q.regularMarketPreviousClose ?? q.regularMarketPrice };
 }
 
 async function skFetchHistory(h, range, interval) {
-  const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${h.sym}?interval=${interval}&range=${range}`;
-  const data = await skYFetch(url, 16000);
+  const data = await skWorkerFetch(`/chart?symbol=${encodeURIComponent(h.sym)}&range=${range}&interval=${interval}`, 16000);
   const result = data?.chart?.result?.[0];
   if (!result) return null;
   const times  = result.timestamp || [];
