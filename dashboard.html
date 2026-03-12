@@ -316,6 +316,8 @@ body {
   padding: 16px 18px 12px;
   margin-bottom: 16px;
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 680px;
 }
 .portfolio-card-header {
   display: flex;
@@ -414,7 +416,7 @@ body {
   .home-body { padding: 28px 16px 48px; }
   .tools-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .nav-title { font-size: 0.9rem; }
-  #sk-summary { grid-template-columns: repeat(2, 1fr); }
+  .portfolio-card { padding: 14px 14px 10px; }
   .tip-card { padding: 20px 18px; }
 }
 </style>
@@ -639,8 +641,7 @@ body {
 
 
 <script>
-'use strict'
-
+'use strict';
 // ════════════════════════════════════════════
 //  TIPS — inline data, no external fetch
 // ════════════════════════════════════════════
@@ -981,7 +982,19 @@ async function loadNewsFeed() {
   const grid  = document.getElementById('news-grid');
   grid.innerHTML = '<div class="news-loading">⏳ Fetching…</div>';
   const rssUrl = RSS_FEEDS[activeFeed];
-  try
+  try {
+    const items = await fetchRssItems(rssUrl);
+    grid.innerHTML = items.map(i => `<div class="news-card">
+      <a href="${escHtml(i.link)}" target="_blank" rel="noopener">${escHtml(i.title)}</a>
+      <div class="news-card-meta">
+        <span class="news-badge">${escHtml(activeFeed)}</span>
+        <span class="news-date">${i.date}</span>
+      </div></div>`).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="news-error">⚠️ Could not load ${escHtml(activeFeed)}.<br>
+      <a href="${escHtml(rssUrl)}" target="_blank" style="color:var(--accent)">Open feed directly ↗</a></div>`;
+  }
+}
 
 // ════════════════════════════════════════════
 //  ROAD TRIP
@@ -1299,9 +1312,9 @@ async function pfLoad() {
 
   } catch(e) {
     document.getElementById('pf-holdings').innerHTML = `<div class="pf-error">⚠️ Could not load prices. <button onclick="pfLoad()" style="background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:0.75rem">Retry</button></div>`;
+  } finally {
+    if (btn) btn.classList.remove('spinning');
   }
-
-  if (btn) btn.classList.remove('spinning');
 }
 
 // Auto-load portfolio on page init
