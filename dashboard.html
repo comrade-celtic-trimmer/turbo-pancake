@@ -46,6 +46,10 @@ body{font-family:var(--font-body);background:var(--cream);color:var(--ink);font-
 .news-main-tab:hover:not(.active){background:var(--cream2)}
 .digest-body{font-size:0.88rem;line-height:1.65;color:var(--ink-mid)}
 .digest-body p+p{margin-top:10px}
+.digest-section{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin:14px 0 4px;font-family:var(--font-mono)}
+.digest-section:first-child{margin-top:0}
+.digest-list{margin:0 0 4px 0;padding-left:16px;list-style:disc}
+.digest-list li{margin-bottom:3px}
 .digest-loading{color:var(--ink-light);font-size:0.82rem;display:flex;align-items:center;gap:8px}
 .digest-spinner{width:14px;height:14px;border:2px solid var(--border-mid);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
 .digest-ts{font-size:0.68rem;color:var(--ink-light);font-family:var(--font-mono);margin-top:10px}
@@ -451,9 +455,27 @@ async function digestLoad() {
     var d = await r.json();
     var html = '';
     if (d.commentary) {
-      var paras = d.commentary.split(/\n\n+/).filter(Boolean);
+      var lines = d.commentary.split('\n');
+      var parts = [];
+      var inList = false;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) { if (inList) { parts.push('</ul>'); inList = false; } continue; }
+        var hm = line.match(/^\*\*(.+?)\*\*\s*$/);
+        if (hm) {
+          if (inList) { parts.push('</ul>'); inList = false; }
+          parts.push('<h4 class="digest-section">' + escHtml(hm[1]) + '</h4>');
+        } else if (line.startsWith('- ')) {
+          if (!inList) { parts.push('<ul class="digest-list">'); inList = true; }
+          parts.push('<li>' + escHtml(line.slice(2).trim()) + '</li>');
+        } else {
+          if (inList) { parts.push('</ul>'); inList = false; }
+          parts.push('<p>' + escHtml(line) + '</p>');
+        }
+      }
+      if (inList) parts.push('</ul>');
       html = '<div class="digest-body">' +
-        paras.map(function(p){ return '<p>' + escHtml(p.trim()) + '</p>'; }).join('') +
+        parts.join('') +
         '<div class="digest-ts">Updated ' + new Date(d.generatedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}) + '</div>' +
         '</div>';
     } else if (d.headlines && d.headlines.length) {
@@ -590,7 +612,7 @@ function renderTalk(idx) {
       '<button class="talk-btn" onclick="talkPrev()">\u2190 Prev</button>' +
       '<button class="talk-btn primary" onclick="talkRandom()">\uD83D\uDD00 Random</button>' +
       '<button class="talk-btn" onclick="talkNext()">Next \u2192</button>' +
-      '<a class="talk-browse" href="https://www.dhammatalks.org/audio/morning/" target="_blank" rel="noopener">Browse all \u2197</a>' +
+      '<a class="talk-browse" href="https://www.dhammatalks.org/audio/" target="_blank" rel="noopener">Browse all \u2197</a>' +
     '</div>';
 }
 function talkPrev()   { if (talkIndex > 0) renderTalk(talkIndex - 1); }
@@ -614,7 +636,7 @@ async function talksLoad() {
     renderTalk(Math.floor(rand() * allTalks.length));
   } catch(e) {
     body.innerHTML = '<div class="talk-status err">&#x26A0;&#xFE0F; Could not load talks (' + escHtml(e.message) + '). ' +
-      '<a href="https://www.dhammatalks.org/audio/morning/" target="_blank" style="color:var(--accent)">Open directly &#x2197;</a></div>';
+      '<a href="https://www.dhammatalks.org/audio/" target="_blank" style="color:var(--accent)">Open directly &#x2197;</a></div>';
   } finally {
     if (btn) btn.classList.remove('spinning');
   }
