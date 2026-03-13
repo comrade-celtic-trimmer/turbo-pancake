@@ -2,7 +2,7 @@
  * Cloudflare Worker — spring-sky-90bc.jlmackay.workers.dev
  *
  * GET  /digest   → Fetch all 5 RSS feeds + AI structured digest
- * GET  /talks    → Fetch dhammatalks.org morning talks page HTML
+ * GET  /talks    → Fetch dhammatalks.org main audio page HTML
  * GET  /ai?prompt=...   → Raw Llama prompt
  * GET  /traffic?lat=&lon=&radius=  → TomTom traffic incidents
  * POST /fuel     → NSW FuelCheck prices
@@ -109,9 +109,9 @@ Rules:
   });
 }
 
-// /talks — fetch dhammatalks.org morning archive page, return HTML
+// /talks — fetch dhammatalks.org main audio page, return HTML
 async function handleTalks() {
-  const r = await fetch('https://www.dhammatalks.org/audio/morning/', {
+  const r = await fetch('https://www.dhammatalks.org/audio/', {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml',
