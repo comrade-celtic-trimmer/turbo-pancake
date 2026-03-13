@@ -34,6 +34,8 @@ body{font-family:var(--font-body);background:var(--cream);color:var(--ink);font-
 .home-hero h1{font-family:var(--font-head);font-size:2.8rem;font-weight:700;color:var(--ink);line-height:1.1}
 .home-hero-sub{font-size:0.88rem;color:var(--ink-light);margin-top:8px}
 .home-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);max-width:700px;margin:0 auto 20px;overflow:hidden}
+.home-columns{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:20px;align-items:start}
+.home-columns .home-card{max-width:none;margin:0}
 .home-card-header{display:flex;align-items:center;gap:8px;padding:14px 18px 12px;border-bottom:1px solid var(--border)}
 .home-card-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--ink-light);font-weight:500}
 .home-card-body{padding:16px 18px}
@@ -191,6 +193,7 @@ body{font-family:var(--font-body);background:var(--cream);color:var(--ink);font-
 #page-roadtrip .leaflet-tile-pane{filter:brightness(0.7) saturate(0.8)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp 0.3s ease forwards}
+@media(max-width:900px){.home-columns{grid-template-columns:1fr}}
 @media(max-width:480px){.home-body{padding:16px 14px 48px}.home-hero h1{font-size:2.2rem}.home-topbar{padding:12px 14px 0}}
 </style>
 </head>
@@ -210,45 +213,47 @@ body{font-family:var(--font-body);background:var(--cream);color:var(--ink);font-
       <h1>Good <span id="home-greeting"></span>.</h1>
       <div class="home-hero-sub">What are we doing today?</div>
     </div>
-    <div class="home-card fade-up" id="news-card" style="animation-delay:0.05s">
-      <div class="home-card-header">
-        <span class="home-card-label">&#x1F5DE;&#xFE0F; News</span>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-          <button class="news-main-tab active" data-tab="summary" onclick="newsSetTab('summary')">Summary</button>
-          <button class="news-main-tab" data-tab="headlines" onclick="newsSetTab('headlines')">Headlines</button>
-          <button class="home-card-refresh" id="digest-refresh-btn" onclick="digestRefresh()" title="Refresh summary">&#x21BB;</button>
+    <div class="home-columns">
+      <div class="home-card fade-up" id="talks-card" style="animation-delay:0.05s">
+        <div class="home-card-header">
+          <span class="home-card-label">&#x1F399;&#xFE0F; Dhamma Talk</span>
+          <button class="home-card-refresh" id="talks-refresh-btn" onclick="talksLoad()" title="Refresh">&#x21BB;</button>
+        </div>
+        <div class="home-card-body" id="talks-body"><div class="talk-status">&#x23F3; Loading&hellip;</div></div>
+      </div>
+      <div class="home-card fade-up" id="news-card" style="animation-delay:0.10s">
+        <div class="home-card-header">
+          <span class="home-card-label">&#x1F5DE;&#xFE0F; News</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <button class="news-main-tab active" data-tab="summary" onclick="newsSetTab('summary')">Summary</button>
+            <button class="news-main-tab" data-tab="headlines" onclick="newsSetTab('headlines')">Headlines</button>
+            <button class="home-card-refresh" id="digest-refresh-btn" onclick="digestRefresh()" title="Refresh summary">&#x21BB;</button>
+          </div>
+        </div>
+        <div id="news-summary-panel">
+          <div class="home-card-body" id="digest-body">
+            <div class="digest-loading"><div class="digest-spinner"></div> Generating digest&hellip;</div>
+          </div>
+        </div>
+        <div id="news-headlines-panel" style="display:none">
+          <div class="news-tabs" id="news-feed-tabs"></div>
+          <div class="news-list" id="news-list"><div class="news-status">Loading&hellip;</div></div>
         </div>
       </div>
-      <div id="news-summary-panel">
-        <div class="home-card-body" id="digest-body">
-          <div class="digest-loading"><div class="digest-spinner"></div> Generating digest&hellip;</div>
+      <div class="home-card fade-up" id="tip-card" style="animation-delay:0.15s">
+        <div class="tip-card-label">
+          &#x1F392; Daily Tip
+          <span class="tip-cat-badge" id="tip-cat-badge">&mdash;</span>
+          <span class="tip-counter" id="tip-counter"></span>
         </div>
-      </div>
-      <div id="news-headlines-panel" style="display:none">
-        <div class="news-tabs" id="news-feed-tabs"></div>
-        <div class="news-list" id="news-list"><div class="news-status">Loading&hellip;</div></div>
-      </div>
-    </div>
-    <div class="home-card fade-up" id="talks-card" style="animation-delay:0.10s">
-      <div class="home-card-header">
-        <span class="home-card-label">&#x1F399;&#xFE0F; Dhamma Talk</span>
-        <button class="home-card-refresh" id="talks-refresh-btn" onclick="talksLoad()" title="Refresh">&#x21BB;</button>
-      </div>
-      <div class="home-card-body" id="talks-body"><div class="talk-status">&#x23F3; Loading&hellip;</div></div>
-    </div>
-    <div class="home-card fade-up" id="tip-card" style="animation-delay:0.15s">
-      <div class="tip-card-label">
-        &#x1F392; Daily Tip
-        <span class="tip-cat-badge" id="tip-cat-badge">&mdash;</span>
-        <span class="tip-counter" id="tip-counter"></span>
-      </div>
-      <div class="tip-text" id="tip-text">Loading&hellip;</div>
-      <div class="tip-footer">
-        <div class="tip-source" id="tip-source"></div>
-        <div class="tip-nav">
-          <button class="tip-nav-btn" onclick="tipPrev()">&larr;</button>
-          <button class="tip-nav-btn primary" onclick="tipRandom()">&#x26A1; Random</button>
-          <button class="tip-nav-btn" onclick="tipNext()">&rarr;</button>
+        <div class="tip-text" id="tip-text">Loading&hellip;</div>
+        <div class="tip-footer">
+          <div class="tip-source" id="tip-source"></div>
+          <div class="tip-nav">
+            <button class="tip-nav-btn" onclick="tipPrev()">&larr;</button>
+            <button class="tip-nav-btn primary" onclick="tipRandom()">&#x26A1; Random</button>
+            <button class="tip-nav-btn" onclick="tipNext()">&rarr;</button>
+          </div>
         </div>
       </div>
     </div>
@@ -629,8 +634,18 @@ async function talksLoad() {
     var r = await fetch(WORKER + '/talks');
     if (!r.ok) throw new Error('Worker responded ' + r.status);
     var d = await r.json();
-    if (!d.html) throw new Error('Worker returned no HTML field');
-    allTalks = parseDhammaTalks(d.html);
+    var sources = d.htmlParts || (d.html ? [d.html] : null);
+    if (!sources || !sources.length) throw new Error('Worker returned no HTML');
+    var seen = new Set();
+    for (var si = 0; si < sources.length; si++) {
+      var parsed = parseDhammaTalks(sources[si]);
+      for (var pi = 0; pi < parsed.length; pi++) {
+        if (!seen.has(parsed[pi].mp3)) {
+          seen.add(parsed[pi].mp3);
+          allTalks.push(parsed[pi]);
+        }
+      }
+    }
     if (!allTalks.length) throw new Error('Parsed 0 talks from page');
     var rand = seededRand(todaySeed());
     renderTalk(Math.floor(rand() * allTalks.length));

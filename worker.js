@@ -109,18 +109,25 @@ Rules:
   });
 }
 
-// /talks — fetch dhammatalks.org main audio page, return HTML
+// /talks — fetch dhammatalks.org audio pages (main, evening, lectures), return HTML parts
 async function handleTalks() {
-  const r = await fetch('https://www.dhammatalks.org/audio/', {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml',
-    },
-    cf: { cacheTtl: 3600 },
-  });
-  if (!r.ok) return json({ error: `dhammatalks ${r.status}` }, 502);
-  const html = await r.text();
-  return new Response(JSON.stringify({ html }), {
+  const TALK_URLS = [
+    'https://www.dhammatalks.org/audio/',
+    'https://www.dhammatalks.org/audio/evening/',
+    'https://www.dhammatalks.org/audio/lectures/',
+  ];
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml',
+  };
+  const results = await Promise.allSettled(
+    TALK_URLS.map(url => fetch(url, { headers, cf: { cacheTtl: 3600 } }).then(r => r.ok ? r.text() : Promise.reject(r.status)))
+  );
+  const htmlParts = results
+    .filter(r => r.status === 'fulfilled')
+    .map(r => r.value);
+  if (!htmlParts.length) return json({ error: 'dhammatalks unavailable' }, 502);
+  return new Response(JSON.stringify({ htmlParts }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 }
