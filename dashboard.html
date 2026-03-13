@@ -573,58 +573,9 @@ function seededRand(seed) {
   return function() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0x100000000; };
 }
 
-function parseDhammaTalks(html) {
-  var doc  = new DOMParser().parseFromString(html, 'text/html');
-  var seen = new Set();
-  var out  = [];
-  doc.querySelectorAll('li').forEach(function(li) {
-    // Find the MP3 link
-    var mp3Href = '';
-    li.querySelectorAll('a[href]').forEach(function(a) {
-      if (mp3Href) return;
-      var h = (a.getAttribute('href') || '').trim();
-      if (h.toLowerCase().endsWith('.mp3')) mp3Href = h;
-    });
-    if (!mp3Href) return;
-    var mp3 = mp3Href.startsWith('http') ? mp3Href : 'https://www.dhammatalks.org' + (mp3Href.startsWith('/') ? '' : '/') + mp3Href;
-    if (seen.has(mp3)) return;
-    seen.add(mp3);
-    // Find title: prefer link that points to an .html page, then any non-trivial link text
-    var title = '';
-    li.querySelectorAll('a[href]').forEach(function(a) {
-      if (title) return;
-      var h = (a.getAttribute('href') || '');
-      if (h.toLowerCase().endsWith('.mp3')) return; // skip the download link
-      var t = (a.textContent || '').trim().replace(/^\[|\]$/g, '').trim();
-      if (t && t.length > 3) title = t;
-    });
-    // Fall back: try any link text that isn't "Play Audio" / "Download"
-    if (!title) {
-      li.querySelectorAll('a').forEach(function(a) {
-        if (title) return;
-        var t = (a.textContent || '').trim().replace(/^\[|\]$/g, '').replace(/^Play\s*Audio\d*/i, '').trim();
-        if (t && t.length > 3 && !/^download$/i.test(t)) title = t;
-      });
-    }
-    // Fall back to filename
-    if (!title) {
-      title = mp3.split('/').pop().replace(/\.mp3$/i, '').replace(/^\d{6,8}[-_]/, '').replace(/[-_]/g, ' ').trim() || 'Dhamma Talk';
-    }
-    // Extract date from filename (YYMMDD prefix)
-    var dateStr = '';
-    var fnMatch = mp3.split('/').pop().match(/^(\d{2})(\d{2})(\d{2})/);
-    if (!fnMatch) fnMatch = (li.id || '').match(/^(\d{2})(\d{2})(\d{2})/);
-    if (fnMatch) {
-      var yr = parseInt(fnMatch[1]) + (parseInt(fnMatch[1]) < 50 ? 2000 : 1900);
-      var mo = parseInt(fnMatch[2]) - 1;
-      var dy = parseInt(fnMatch[3]);
-      if (mo >= 0 && mo < 12 && dy >= 1 && dy <= 31) {
-        try { dateStr = new Date(yr, mo, dy).toLocaleDateString('en-AU', {year:'numeric',month:'long',day:'numeric'}); } catch(e) {}
-      }
-    }
-    out.push({ title: title, mp3: mp3, dateStr: dateStr, teacher: 'Thanissaro Bhikkhu' });
-  });
-  return out;
+function formatTalkDate(pubDate) {
+  if (!pubDate) return '';
+  try { return new Date(pubDate).toLocaleDateString('en-AU', {year:'numeric',month:'long',day:'numeric'}); } catch(e) { return ''; }
 }
 
 function renderTalk(idx) {
@@ -632,7 +583,7 @@ function renderTalk(idx) {
   if (!talk) return;
   talkIndex = idx;
   var body = document.getElementById('talks-body');
-  var meta = [talk.teacher, talk.dateStr].filter(Boolean).join(' \u00B7 ');
+  var meta = [talk.teacher, talk.dateStr, talk.durStr].filter(Boolean).join(' \u00B7 ');
   body.innerHTML =
     '<div class="talk-title-text">' + escHtml(talk.title) + '</div>' +
     '<div class="talk-meta">' + escHtml(meta) + '</div>' +
@@ -658,19 +609,13 @@ async function talksLoad() {
     var r = await fetch(WORKER + '/talks');
     if (!r.ok) throw new Error('Worker responded ' + r.status);
     var d = await r.json();
-    var sources = d.htmlParts || (d.html ? [d.html] : null);
-    if (!sources || !sources.length) throw new Error('Worker returned no HTML');
-    var seen = new Set();
-    for (var si = 0; si < sources.length; si++) {
-      var parsed = parseDhammaTalks(sources[si]);
-      for (var pi = 0; pi < parsed.length; pi++) {
-        if (!seen.has(parsed[pi].mp3)) {
-          seen.add(parsed[pi].mp3);
-          allTalks.push(parsed[pi]);
-        }
-      }
-    }
-    if (!allTalks.length) throw new Error('Parsed 0 talks from page');
+    if (!d.talks || !d.talks.length) throw new Error('Worker returned no talks');
+    allTalks = d.talks.map(function(t) {
+      var durStr = '';
+      if (t.duration > 0) { var m = Math.floor(t.duration / 60); var s = t.duration % 60; durStr = m + ':' + (s < 10 ? '0' : '') + s; }
+      return { title: t.title, mp3: t.mp3, dateStr: formatTalkDate(t.pubDate), teacher: t.teacher, durStr: durStr };
+    });
+    if (!allTalks.length) throw new Error('No talks available');
     var rand = seededRand(todaySeed());
     renderTalk(Math.floor(rand() * allTalks.length));
   } catch(e) {

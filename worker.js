@@ -109,25 +109,43 @@ Rules:
   });
 }
 
-// /talks — fetch dhammatalks.org audio pages (main, evening, lectures), return HTML parts
+// /talks — fetch dhammatalks.org RSS feeds and return parsed talks
 async function handleTalks() {
-  const TALK_URLS = [
-    'https://www.dhammatalks.org/audio/',
-    'https://www.dhammatalks.org/audio/evening/',
-    'https://www.dhammatalks.org/audio/lectures/',
+  const RSS_URLS = [
+    'https://www.dhammatalks.org/rss/evening.xml',
+    'https://www.dhammatalks.org/rss/morning.xml',
   ];
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml',
+    'Accept': 'application/rss+xml,application/xml,text/xml',
   };
   const results = await Promise.allSettled(
-    TALK_URLS.map(url => fetch(url, { headers, cf: { cacheTtl: 3600 } }).then(r => r.ok ? r.text() : Promise.reject(r.status)))
+    RSS_URLS.map(url => fetch(url, { headers, cf: { cacheTtl: 3600 } }).then(r => r.ok ? r.text() : Promise.reject(r.status)))
   );
-  const htmlParts = results
-    .filter(r => r.status === 'fulfilled')
-    .map(r => r.value);
-  if (!htmlParts.length) return json({ error: 'dhammatalks unavailable' }, 502);
-  return new Response(JSON.stringify({ htmlParts }), {
+  const talks = [];
+  const seen = new Set();
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    const xml = result.value;
+    const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+    for (const [, item] of items) {
+      const mp3 = (item.match(/<enclosure[^>]+url="([^"]+\.mp3)"/) || [])[1];
+      if (!mp3 || seen.has(mp3)) continue;
+      seen.add(mp3);
+      const title = (item.match(/<title><!\[CDATA\[(.*?)\]\]>/) || item.match(/<title>(.*?)<\/title>/) || [])[1] || '';
+      const pubDate = (item.match(/<pubDate>(.*?)<\/pubDate>/) || [])[1] || '';
+      const duration = (item.match(/<itunes:duration>(.*?)<\/itunes:duration>/) || [])[1] || '';
+      talks.push({
+        title: title.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim(),
+        mp3,
+        pubDate,
+        duration: parseInt(duration, 10) || 0,
+        teacher: 'Thanissaro Bhikkhu',
+      });
+    }
+  }
+  if (!talks.length) return json({ error: 'dhammatalks unavailable' }, 502);
+  return new Response(JSON.stringify({ talks }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 }
