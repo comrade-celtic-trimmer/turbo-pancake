@@ -577,23 +577,47 @@ function parseDhammaTalks(html) {
   var doc  = new DOMParser().parseFromString(html, 'text/html');
   var seen = new Set();
   var out  = [];
-  doc.querySelectorAll('li.li-audio').forEach(function(li) {
-    var btn = li.querySelector('button[data-link]');
-    if (!btn) return;
-    var rawLink = btn.getAttribute('data-link') || '';
-    if (!rawLink) return;
-    var mp3 = rawLink.startsWith('http') ? rawLink : 'https://www.dhammatalks.org' + (rawLink.startsWith('/') ? '' : '/') + rawLink;
+  doc.querySelectorAll('li').forEach(function(li) {
+    // Find the MP3 link
+    var mp3Href = '';
+    li.querySelectorAll('a[href]').forEach(function(a) {
+      if (mp3Href) return;
+      var h = (a.getAttribute('href') || '').trim();
+      if (h.toLowerCase().endsWith('.mp3')) mp3Href = h;
+    });
+    if (!mp3Href) return;
+    var mp3 = mp3Href.startsWith('http') ? mp3Href : 'https://www.dhammatalks.org' + (mp3Href.startsWith('/') ? '' : '/') + mp3Href;
     if (seen.has(mp3)) return;
     seen.add(mp3);
-    var titleEl = li.querySelector('a.audio span') || li.querySelector('a.audio');
-    var title = (titleEl && titleEl.textContent && titleEl.textContent.trim()) ||
-      mp3.split('/').pop().replace(/\.mp3$/i,'').replace(/[-_]/g,' ').trim() || 'Dharma Talk';
-    var dateStr  = '';
-    var idMatch  = (li.id || '').match(/^(\d{2})(\d{2})(\d{2})-/);
-    if (idMatch) {
-      var yr = parseInt(idMatch[1]) + (parseInt(idMatch[1]) < 50 ? 2000 : 1900);
-      var mo = parseInt(idMatch[2]) - 1;
-      var dy = parseInt(idMatch[3]);
+    // Find title: prefer link that points to an .html page, then any non-trivial link text
+    var title = '';
+    li.querySelectorAll('a[href]').forEach(function(a) {
+      if (title) return;
+      var h = (a.getAttribute('href') || '');
+      if (h.toLowerCase().endsWith('.mp3')) return; // skip the download link
+      var t = (a.textContent || '').trim().replace(/^\[|\]$/g, '').trim();
+      if (t && t.length > 3) title = t;
+    });
+    // Fall back: try any link text that isn't "Play Audio" / "Download"
+    if (!title) {
+      li.querySelectorAll('a').forEach(function(a) {
+        if (title) return;
+        var t = (a.textContent || '').trim().replace(/^\[|\]$/g, '').replace(/^Play\s*Audio\d*/i, '').trim();
+        if (t && t.length > 3 && !/^download$/i.test(t)) title = t;
+      });
+    }
+    // Fall back to filename
+    if (!title) {
+      title = mp3.split('/').pop().replace(/\.mp3$/i, '').replace(/^\d{6,8}[-_]/, '').replace(/[-_]/g, ' ').trim() || 'Dhamma Talk';
+    }
+    // Extract date from filename (YYMMDD prefix)
+    var dateStr = '';
+    var fnMatch = mp3.split('/').pop().match(/^(\d{2})(\d{2})(\d{2})/);
+    if (!fnMatch) fnMatch = (li.id || '').match(/^(\d{2})(\d{2})(\d{2})/);
+    if (fnMatch) {
+      var yr = parseInt(fnMatch[1]) + (parseInt(fnMatch[1]) < 50 ? 2000 : 1900);
+      var mo = parseInt(fnMatch[2]) - 1;
+      var dy = parseInt(fnMatch[3]);
       if (mo >= 0 && mo < 12 && dy >= 1 && dy <= 31) {
         try { dateStr = new Date(yr, mo, dy).toLocaleDateString('en-AU', {year:'numeric',month:'long',day:'numeric'}); } catch(e) {}
       }
