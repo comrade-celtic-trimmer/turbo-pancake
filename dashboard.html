@@ -1,875 +1,875 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>My Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-:root {
-  --cream:#f5f0e8; --cream2:#ede7d9; --cream3:#e4dccb; --sand:#c8b89a; --sand-dark:#a0896e;
-  --ink:#2c2416; --ink-mid:#5c4f3d; --ink-light:#8c7d6a;
-  --accent:#c17f3e; --accent2:#7a9e7e; --accent3:#7e8fa6; --red:#b85450; --green:#5a8a5e;
-  --surface:#ffffff; --border:rgba(160,137,110,0.2); --border-mid:rgba(160,137,110,0.35);
-  --shadow-sm:0 1px 4px rgba(44,36,22,0.07); --shadow-md:0 4px 20px rgba(44,36,22,0.10);
-  --radius:12px; --font-head:'Playfair Display',serif; --font-body:'DM Sans',sans-serif; --font-mono:'DM Mono',monospace;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{font-family:var(--font-body);background:var(--cream);color:var(--ink);font-size:14px;-webkit-tap-highlight-color:transparent}
-.page{display:none;flex-direction:column;height:100vh;overflow:hidden}
-.page.active{display:flex}
-.home-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;flex-shrink:0}
-.home-topbar-logo{font-family:var(--font-head);font-size:1rem;color:var(--ink);font-weight:600}
-.home-topbar-date{font-size:0.72rem;color:var(--ink-light);font-family:var(--font-mono);letter-spacing:0.03em}
-.home-topbar-right{display:flex;align-items:center;gap:10px}
-.rt-topbar-btn{font-size:0.72rem;font-family:var(--font-mono);letter-spacing:0.03em;color:var(--ink-light);background:none;border:1px solid var(--border-mid);border-radius:6px;padding:4px 10px;cursor:pointer;transition:all 0.15s}
-.rt-topbar-btn:hover{background:var(--cream3);color:var(--ink)}
-.home-body{flex:1;overflow-y:auto;padding:20px 28px 60px}
-.home-hero{text-align:center;margin-bottom:28px}
-.home-hero-eyebrow{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-light);margin-bottom:6px;font-family:var(--font-mono)}
-.home-hero h1{font-family:var(--font-head);font-size:2.8rem;font-weight:700;color:var(--ink);line-height:1.1}
-.home-hero-sub{font-size:0.88rem;color:var(--ink-light);margin-top:8px}
-.home-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);max-width:700px;margin:0 auto 20px;overflow:hidden}
-.home-columns{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:20px;align-items:start}
-.home-columns .home-card{max-width:none;margin:0}
-.home-card-header{display:flex;align-items:center;gap:8px;padding:14px 18px 12px;border-bottom:1px solid var(--border)}
-.home-card-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--ink-light);font-weight:500}
-.home-card-body{padding:16px 18px}
-.home-card-refresh{background:none;border:none;cursor:pointer;font-size:1rem;color:var(--ink-light);padding:2px 4px;border-radius:4px;transition:color 0.15s;line-height:1}
-.home-card-refresh:hover{color:var(--accent)}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinning{animation:spin 0.8s linear infinite;display:inline-block}
-.news-main-tab{font-size:0.7rem;font-family:var(--font-mono);padding:3px 10px;border-radius:20px;border:1px solid var(--border-mid);background:none;color:var(--ink-light);cursor:pointer;transition:all 0.15s}
-.news-main-tab.active{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.news-main-tab:hover:not(.active){background:var(--cream2)}
-.digest-body{font-size:0.88rem;line-height:1.65;color:var(--ink-mid)}
-.digest-body p+p{margin-top:10px}
-.digest-section{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin:14px 0 4px;font-family:var(--font-mono)}
-.digest-section:first-child{margin-top:0}
-.digest-list{margin:0 0 4px 0;padding-left:16px;list-style:disc}
-.digest-list li{margin-bottom:3px}
-.digest-loading{color:var(--ink-light);font-size:0.82rem;display:flex;align-items:center;gap:8px}
-.digest-spinner{width:14px;height:14px;border:2px solid var(--border-mid);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
-.digest-ts{font-size:0.68rem;color:var(--ink-light);font-family:var(--font-mono);margin-top:10px}
-.digest-error{font-size:0.82rem;color:var(--red)}
-.news-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;border-bottom:1px solid var(--border)}
-.news-tab-btn{font-size:0.72rem;font-family:var(--font-mono);padding:4px 10px;border-radius:20px;border:1px solid var(--border-mid);background:none;color:var(--ink-light);cursor:pointer;transition:all 0.15s}
-.news-tab-btn.active{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.news-tab-btn:hover:not(.active){background:var(--cream2)}
-.news-list{padding:0}
-.news-item{padding:11px 18px;border-bottom:1px solid var(--border)}
-.news-item:last-child{border-bottom:none}
-.news-item a{font-size:0.88rem;color:var(--ink);text-decoration:none;line-height:1.45;display:block}
-.news-item a:hover{color:var(--accent)}
-.news-item-meta{font-size:0.68rem;color:var(--ink-light);font-family:var(--font-mono);margin-top:4px}
-.news-status{padding:14px 18px;font-size:0.82rem;color:var(--ink-light)}
-.news-status.err{color:var(--red)}
-.talk-title-text{font-family:var(--font-head);font-size:1.05rem;color:var(--ink);line-height:1.35;margin-bottom:4px}
-.talk-meta{font-size:0.72rem;color:var(--ink-light);font-family:var(--font-mono);margin-bottom:12px}
-.talk-audio{width:100%;height:36px}
-.talk-nav-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
-.talk-btn{font-size:0.75rem;font-family:var(--font-mono);padding:6px 12px;border-radius:6px;border:1px solid var(--border-mid);background:none;color:var(--ink-mid);cursor:pointer;transition:all 0.15s}
-.talk-btn:hover{background:var(--cream2)}
-.talk-btn.primary{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.talk-browse{font-size:0.72rem;color:var(--accent);text-decoration:none;margin-left:auto;font-family:var(--font-mono)}
-.talk-browse:hover{text-decoration:underline}
-.talk-status{font-size:0.82rem;color:var(--ink-light)}
-.talk-status.err{color:var(--red)}
-.tip-card-label{display:flex;align-items:center;gap:8px;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--ink-light);font-weight:500;padding:14px 18px 12px;border-bottom:1px solid var(--border)}
-.tip-cat-badge{font-size:0.6rem;padding:2px 7px;border-radius:10px;background:var(--cream2);border:1px solid var(--border-mid);color:var(--ink-mid);text-transform:uppercase;letter-spacing:0.08em}
-.tip-counter{margin-left:auto;color:var(--ink-light);font-size:0.65rem}
-.tip-text{font-size:0.92rem;line-height:1.6;color:var(--ink);padding:16px 18px 10px}
-.tip-footer{display:flex;align-items:center;justify-content:space-between;padding:0 18px 14px;flex-wrap:wrap;gap:8px}
-.tip-source{font-size:0.68rem;color:var(--ink-light);font-style:italic;font-family:var(--font-mono)}
-.tip-nav{display:flex;gap:6px}
-.tip-nav-btn{font-size:0.75rem;padding:5px 10px;border-radius:6px;border:1px solid var(--border-mid);background:none;color:var(--ink-mid);cursor:pointer;font-family:var(--font-mono);transition:all 0.15s}
-.tip-nav-btn:hover{background:var(--cream2)}
-.tip-nav-btn.primary{background:var(--ink);color:var(--cream);border-color:var(--ink)}
-.nav-bar{height:54px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--cream);border-bottom:1px solid var(--border);flex-shrink:0}
-.nav-home-btn{display:flex;align-items:center;gap:6px;font-size:0.75rem;font-family:var(--font-mono);color:var(--ink-light);background:none;border:1px solid var(--border-mid);border-radius:6px;padding:5px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
-.nav-home-btn:hover{background:var(--cream2);color:var(--ink)}
-.nav-title{font-size:0.82rem;font-weight:600;color:var(--ink)}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-#page-roadtrip{overflow:hidden}
-#roadtrip-inner{flex:1;display:flex;flex-direction:column;overflow:hidden;--rt-bg:#0d1117;--rt-surface:#161b22;--rt-surface2:#1c2330;--rt-border:#2a3441;--rt-accent:#f0a500;--rt-accent2:#e05c2a;--rt-rain:#4a9eff;--rt-green:#3fb950;--rt-red:#f85149;--rt-muted:#7a8899;--rt-text:#e6edf3;--rt-text-dim:#8b949e;background:var(--rt-bg);color:var(--rt-text);font-family:var(--font-body)}
-#rt-search-bar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--rt-surface);border-bottom:1px solid var(--rt-border)}
-#rt-location-input{flex:1;background:var(--rt-surface2);border:1px solid var(--rt-border);border-radius:8px;padding:7px 12px;color:var(--rt-text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color 0.2s;min-width:0}
-#rt-location-input:focus{border-color:var(--rt-accent)}
-#rt-location-input::placeholder{color:var(--rt-muted)}
-.rt-btn{background:var(--rt-accent);color:#000;border:none;border-radius:8px;padding:7px 13px;font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s}
-.rt-btn:hover{background:#ffb820}
-.rt-btn-ghost{background:var(--rt-surface2);color:var(--rt-text);border:1px solid var(--rt-border)}
-.rt-btn-ghost:hover{background:var(--rt-border)}
-#rt-loc-display{font-size:11px;color:var(--rt-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;flex-shrink:0}
-#rt-loc-display .coords{color:var(--rt-accent);font-weight:500}
-#rt-main{flex:1;display:grid;grid-template-columns:1fr 400px;overflow:hidden;min-height:0}
-@media(max-width:768px){#rt-main{grid-template-columns:1fr;grid-template-rows:40vh 1fr}#rt-map-wrap{height:40vh}#rt-panels{overflow-y:auto}#rt-loc-display{display:none}}
-#rt-map-wrap{position:relative;overflow:hidden}
-#rt-map{width:100%;height:100%}
-#rt-map-legend{position:absolute;bottom:12px;left:12px;z-index:999;background:rgba(13,17,23,0.88);border:1px solid var(--rt-border);border-radius:8px;padding:8px 12px;font-size:11px;backdrop-filter:blur(4px);color:var(--rt-text-dim)}
-#rt-map-legend .leg-item{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-#rt-map-legend .leg-item:last-child{margin-bottom:0}
-.rt-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-#rt-panels{display:flex;flex-direction:column;overflow-y:auto;border-left:1px solid var(--rt-border);background:var(--rt-bg);min-height:0}
-#rt-panels::-webkit-scrollbar{width:4px}
-#rt-panels::-webkit-scrollbar-thumb{background:var(--rt-border);border-radius:2px}
-.rt-card{background:var(--rt-surface);border-bottom:1px solid var(--rt-border);flex-shrink:0}
-.rt-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--rt-border);cursor:pointer;user-select:none}
-.rt-card-header:hover{background:var(--rt-surface2)}
-.rt-card-title{font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:0.4px;display:flex;align-items:center;gap:8px;color:var(--rt-text)}
-.rt-card-toggle{color:var(--rt-muted);font-size:12px;transition:transform 0.2s}
-.rt-card.collapsed .rt-card-toggle{transform:rotate(-90deg)}
-.rt-card.collapsed .rt-card-body{display:none}
-.rt-card-body{padding:12px 14px;overflow-y:auto;max-height:280px;color:var(--rt-text);font-size:13px}
-#rt-card-weather .rt-card-body{max-height:320px}
-.rt-card-body::-webkit-scrollbar{width:4px}
-.rt-card-body::-webkit-scrollbar-thumb{background:var(--rt-border);border-radius:2px}
-.rt-badge{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;border-radius:20px;text-transform:uppercase;font-family:var(--font-body)}
-.rt-badge-ok{background:rgba(63,185,80,0.15);color:var(--rt-green)}
-.rt-badge-warn{background:rgba(240,165,0,0.15);color:var(--rt-accent)}
-.rt-badge-err{background:rgba(248,81,73,0.15);color:var(--rt-red)}
-.rt-badge-load{background:rgba(122,136,153,0.15);color:var(--rt-muted)}
-.rt-weather-now{display:flex;align-items:center;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--rt-border)}
-.rt-weather-temp{font-family:var(--font-head);font-size:48px;font-weight:700;line-height:1;color:var(--rt-accent)}
-.rt-weather-temp sup{font-size:20px;color:var(--rt-text-dim)}
-.rt-weather-desc{font-size:14px;font-weight:500;margin-bottom:4px;color:var(--rt-text)}
-.rt-weather-meta{color:var(--rt-text-dim);font-size:12px;line-height:1.8}
-.rt-weather-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.rt-stat-box{background:var(--rt-surface2);border-radius:8px;padding:8px 10px;text-align:center}
-.rt-stat-val{font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--rt-rain)}
-.rt-stat-lbl{font-size:10px;color:var(--rt-text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
-.rt-section-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--rt-text-dim);margin-bottom:8px}
-.rt-rain-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-bottom:4px}
-.rt-rain-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
-.rt-rain-bar{width:100%;background:var(--rt-rain);border-radius:3px 3px 0 0;min-height:2px;opacity:0.8}
-.rt-rain-bar.heavy{background:#1a6fcc}
-.rt-rain-bar.light{background:#7abfff}
-.rt-rain-time{font-size:9px;color:var(--rt-text-dim);margin-top:3px;white-space:nowrap}
-.rt-forecast-days{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.rt-forecast-day{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--rt-surface2);border-radius:8px;font-size:13px;color:var(--rt-text)}
-.rt-day-name{font-weight:700;width:36px;color:var(--rt-text-dim)}
-.rt-day-icon{font-size:18px;width:24px;text-align:center}
-.rt-day-desc{flex:1;font-size:12px;color:var(--rt-text-dim)}
-.rt-day-temps{font-weight:600;white-space:nowrap}
-.rt-day-rain{color:var(--rt-rain);font-size:11px;min-width:36px;text-align:right}
-.rt-warning-box{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:8px;padding:8px 10px;font-size:12px;color:#ffb3b0;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start}
-.rt-incident{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--rt-border);align-items:flex-start}
-.rt-incident:last-child{border-bottom:none}
-.rt-incident-icon{font-size:18px;width:24px;flex-shrink:0;text-align:center;margin-top:1px}
-.rt-incident-title{font-weight:500;margin-bottom:2px;font-size:13px;color:var(--rt-text)}
-.rt-incident-meta{color:var(--rt-text-dim);line-height:1.5;font-size:12px}
-.rt-sev-tag{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:1px 6px;border-radius:4px;text-transform:uppercase;margin-left:6px}
-.rt-sev-high{background:rgba(248,81,73,0.2);color:var(--rt-red)}
-.rt-sev-med{background:rgba(240,165,0,0.2);color:var(--rt-accent)}
-.rt-sev-low{background:rgba(63,185,80,0.2);color:var(--rt-green)}
-.rt-fuel-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rt-border);font-size:13px}
-.rt-fuel-item:last-child{border-bottom:none}
-.rt-fuel-price{font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--rt-green);min-width:60px}
-.rt-fuel-price.expensive{color:var(--rt-accent2)}
-.rt-fuel-price.mid{color:var(--rt-accent)}
-.rt-fuel-name{font-weight:500;margin-bottom:2px;color:var(--rt-text)}
-.rt-fuel-meta{color:var(--rt-text-dim);font-size:11px}
-.rt-fuel-dist{color:var(--rt-muted);font-size:12px;text-align:right;white-space:nowrap}
-.rt-api-notice{background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.25);border-radius:8px;padding:10px 12px;font-size:12px;color:#e6c870;line-height:1.7;margin-top:8px}
-.rt-camp-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--rt-border);font-size:12px;align-items:flex-start}
-.rt-camp-item:last-child{border-bottom:none}
-.rt-camp-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
-.rt-camp-name{font-weight:500;font-size:13px;margin-bottom:2px;color:var(--rt-text)}
-.rt-camp-meta{color:var(--rt-text-dim);line-height:1.5}
-.rt-camp-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
-.rt-tag{font-size:10px;background:var(--rt-surface2);border:1px solid var(--rt-border);border-radius:4px;padding:1px 6px;color:var(--rt-text-dim)}
-.rt-loading{display:flex;align-items:center;gap:8px;color:var(--rt-muted);font-size:13px;padding:8px 0}
-.rt-spinner{width:16px;height:16px;border:2px solid var(--rt-border);border-top-color:var(--rt-accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
-.rt-empty{color:var(--rt-muted);font-size:13px;padding:8px 0;text-align:center;line-height:1.6}
-.rt-last-updated{font-size:10px;color:var(--rt-muted);margin-top:10px;text-align:right}
-.rt-fuel-type-select{background:var(--rt-surface2);border:1px solid var(--rt-border);color:var(--rt-text);font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:6px;cursor:pointer;outline:none;text-transform:uppercase}
-#page-roadtrip .leaflet-popup-content-wrapper{background:#1c2330!important;color:#e6edf3!important;border:1px solid #2a3441!important;border-radius:8px!important;font-family:var(--font-body)!important}
-#page-roadtrip .leaflet-popup-tip{background:#1c2330!important}
-#page-roadtrip .leaflet-control-zoom a{background:#1c2330!important;color:#e6edf3!important;border-color:#2a3441!important}
-#page-roadtrip .leaflet-tile-pane{filter:brightness(0.7) saturate(0.8)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp 0.3s ease forwards}
-@media(max-width:900px){.home-columns{grid-template-columns:1fr}}
-@media(max-width:480px){.home-body{padding:16px 14px 48px}.home-hero h1{font-size:2.2rem}.home-topbar{padding:12px 14px 0}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Road Trip">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Road Trip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1a1a18;
+      --surface:  #242420;
+      --surface2: #2e2e2a;
+      --border:   #38382e;
+      --text:     #e8e4d8;
+      --muted:    #888880;
+      --accent:   #c8b464;
+      --rain:     #5b9fd4;
+      --heat:     #d4725b;
+      --cold:     #7bbfcf;
+      --fuel:     #d4a85b;
+      --camp:     #6db08c;
+      --traffic:  #c47ab0;
+      --mono:     'DM Mono', monospace;
+      --display:  'Syne', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      min-height: 100%;
+      padding-bottom: 40px;
+      overscroll-behavior: none;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+    }
+
+    .wordmark {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+    }
+    .wordmark span { color: var(--muted); font-weight: 700; }
+
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    #loc-text {
+      font-size: 12px;
+      color: var(--text);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 4px 9px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Banners ── */
+    #offline-banner {
+      display: none;
+      background: #2e2218;
+      border-bottom: 1px solid #5a3a18;
+      padding: 7px 20px;
+      font-size: 12px;
+      color: var(--fuel);
+      text-align: center;
+    }
+    body.is-offline #offline-banner { display: block; }
+
+    #last-updated {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      padding: 5px 20px;
+      border-bottom: 1px solid var(--border);
+      min-height: 24px;
+    }
+
+    #ios-hint {
+      display: none;
+      margin: 12px 20px;
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    #ios-hint strong { color: var(--accent); }
+    #ios-hint.show { display: block; }
+
+    /* ── Sections ── */
+    section {
+      padding: 18px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    #wx-section      .dot { background: var(--rain); }
+    #fuel-section    .dot { background: var(--fuel); }
+    #camp-section    .dot { background: var(--camp); }
+    #traffic-section .dot { background: var(--traffic); }
+
+    /* ── Skeleton ── */
+    .skel {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ── Error ── */
+    .err {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+
+    /* ── WEATHER ── */
+    .wx-alert {
+      display: none;
+      background: #2e1a14;
+      border: 1px solid var(--heat);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 12px;
+      color: var(--heat);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .wx-alert.show { display: block; }
+
+    .wx-now {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .wx-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px;
+    }
+    .wx-card.span2 { grid-column: 1 / -1; }
+
+    .wx-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+
+    .wx-val {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 26px;
+      line-height: 1;
+    }
+    .wx-val.c-rain { color: var(--rain); }
+    .wx-val.c-heat { color: var(--heat); }
+    .wx-val.c-cold { color: var(--cold); }
+    .wx-val.c-text { color: var(--text); }
+
+    .wx-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .wx-range { display: flex; align-items: baseline; gap: 16px; }
+    .wx-range-item { text-align: center; }
+    .wx-range-item .wx-val { font-size: 20px; }
+    .wx-range-sep { color: var(--border); font-size: 18px; }
+
+    .fc-strip {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .fc-day {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 3px;
+      text-align: center;
+    }
+    .fc-day.today { border-color: var(--accent); }
+
+    .fc-name { font-size: 9px;  color: var(--muted); margin-bottom: 3px; }
+    .fc-icon { font-size: 15px; display: block; margin: 2px 0; }
+    .fc-hi   { font-size: 11px; color: var(--heat); font-weight: 500; }
+    .fc-lo   { font-size: 10px; color: var(--cold); }
+    .fc-rain { font-size: 9px;  color: var(--rain); margin-top: 2px; }
+
+    /* ── FUEL ── */
+    .fuel-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .fuel-tabs::-webkit-scrollbar { display: none; }
+
+    .fuel-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 11px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .12s;
+    }
+    .fuel-tab.active { border-color: var(--fuel); color: var(--fuel); background: #272010; }
+
+    .fuel-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .fuel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      transition: border-color .12s;
+    }
+    .fuel-card:hover { border-color: var(--fuel); }
+    .fuel-card.cheapest { border-color: #5a4820; }
+
+    .fuel-name  { font-family: var(--display); font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .fuel-meta  { font-size: 11px; color: var(--muted); }
+    .fuel-badge {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 1px;
+      background: #2a2010;
+      border: 1px solid var(--fuel);
+      color: var(--fuel);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-top: 4px;
+    }
+
+    .fuel-prices { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .fuel-price-row { display: flex; align-items: baseline; gap: 4px; }
+    .fuel-type-tag {
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface2);
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+    .fuel-price-val { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--fuel); }
+    .fuel-price-val.dim { font-size: 12px; color: var(--muted); }
+    .fuel-price-unit { font-size: 10px; color: var(--muted); }
+
+    /* ── CAMPING ── */
+    .camp-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .camp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 14px;
+      transition: border-color .12s;
+    }
+    .camp-card:hover { border-color: var(--camp); }
+
+    .camp-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .camp-name { font-family: var(--display); font-weight: 700; font-size: 14px; flex: 1; padding-right: 8px; }
+    .camp-dist { font-size: 11px; color: var(--accent); white-space: nowrap; }
+
+    .camp-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .camp-tag {
+      font-size: 10px;
+      background: var(--surface2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--muted);
+    }
+    .camp-tag.free     { color: var(--camp);   background: #162416; }
+    .camp-tag.national { color: var(--accent); background: #242010; }
+
+    .camp-actions { display: flex; gap: 7px; }
+    .camp-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .12s;
+      display: inline-block;
+    }
+    .camp-btn.primary   { background: #162416; border: 1px solid var(--camp); color: var(--camp); }
+    .camp-btn.primary:hover { background: #1e3020; }
+    .camp-btn.secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+    .camp-btn.secondary:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── TRAFFIC ── */
+    .traffic-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .traffic-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: border-color .12s;
+    }
+    .traffic-card:hover  { border-color: var(--traffic); }
+    .traffic-card.severe { border-color: #6a2a40; }
+
+    .traffic-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+    .traffic-road  { font-family: var(--display); font-weight: 700; font-size: 13px; }
+    .traffic-delay { font-size: 11px; color: var(--heat); white-space: nowrap; }
+    .traffic-desc  { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .traffic-route { font-size: 11px; color: var(--muted); }
+
+    .traffic-severity {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-top: 6px;
+    }
+    .sev-0 { background: var(--surface2); color: var(--muted); }
+    .sev-1 { background: #2a2010; color: var(--fuel);    border: 1px solid #4a3818; }
+    .sev-2 { background: #2a1818; color: var(--heat);    border: 1px solid #5a2828; }
+    .sev-3 { background: #2a1020; color: var(--traffic); border: 1px solid #5a2048; }
+
+    .traffic-ok {
+      font-size: 12px;
+      color: var(--camp);
+      text-align: center;
+      padding: 16px;
+      border: 1px solid #1a3020;
+      border-radius: 8px;
+      background: #141e18;
+    }
+
+    /* ── Install banner ── */
+    #install-banner {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 13px 15px;
+      z-index: 200;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      align-items: center;
+      gap: 12px;
+    }
+    #install-banner.show { display: flex; }
+
+    .install-text { flex: 1; }
+    .install-text strong { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--accent); display: block; margin-bottom: 1px; }
+    .install-text span   { font-size: 11px; color: var(--muted); }
+
+    #install-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #install-dismiss {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    @media (min-width: 600px) {
+      header, main { max-width: 500px; margin-left: auto; margin-right: auto; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="page active" id="page-home">
-  <div class="home-topbar">
-    <span class="home-topbar-logo">My Dashboard</span>
-    <div class="home-topbar-right">
-      <span class="home-topbar-date" id="home-date"></span>
-      <button class="rt-topbar-btn" onclick="navigate('roadtrip')">&#x1F6E3;&#xFE0F; Road Trip</button>
-    </div>
+<header>
+  <div class="wordmark">RT<span>_</span></div>
+  <div class="header-right">
+    <span id="loc-text">Locating…</span>
+    <button class="btn" id="refresh-btn">↻ Refresh</button>
   </div>
-  <div class="home-body">
-    <div class="home-hero fade-up">
-      <div class="home-hero-eyebrow">Welcome back</div>
-      <h1>Good <span id="home-greeting"></span>.</h1>
-      <div class="home-hero-sub">What are we doing today?</div>
-    </div>
-    <div class="home-columns">
-      <div class="home-card fade-up" id="talks-card" style="animation-delay:0.05s">
-        <div class="home-card-header">
-          <span class="home-card-label">&#x1F399;&#xFE0F; Dhamma Talk</span>
-          <button class="home-card-refresh" id="talks-refresh-btn" onclick="talksLoad()" title="Refresh">&#x21BB;</button>
-        </div>
-        <div class="home-card-body" id="talks-body"><div class="talk-status">&#x23F3; Loading&hellip;</div></div>
-      </div>
-      <div class="home-card fade-up" id="news-card" style="animation-delay:0.10s">
-        <div class="home-card-header">
-          <span class="home-card-label">&#x1F5DE;&#xFE0F; News</span>
-          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-            <button class="news-main-tab active" data-tab="summary" onclick="newsSetTab('summary')">Summary</button>
-            <button class="news-main-tab" data-tab="headlines" onclick="newsSetTab('headlines')">Headlines</button>
-            <button class="home-card-refresh" id="digest-refresh-btn" onclick="digestRefresh()" title="Refresh summary">&#x21BB;</button>
-          </div>
-        </div>
-        <div id="news-summary-panel">
-          <div class="home-card-body" id="digest-body">
-            <div class="digest-loading"><div class="digest-spinner"></div> Generating digest&hellip;</div>
-          </div>
-        </div>
-        <div id="news-headlines-panel" style="display:none">
-          <div class="news-tabs" id="news-feed-tabs"></div>
-          <div class="news-list" id="news-list"><div class="news-status">Loading&hellip;</div></div>
-        </div>
-      </div>
-      <div class="home-card fade-up" id="tip-card" style="animation-delay:0.15s">
-        <div class="tip-card-label">
-          &#x1F392; Daily Tip
-          <span class="tip-cat-badge" id="tip-cat-badge">&mdash;</span>
-          <span class="tip-counter" id="tip-counter"></span>
-        </div>
-        <div class="tip-text" id="tip-text">Loading&hellip;</div>
-        <div class="tip-footer">
-          <div class="tip-source" id="tip-source"></div>
-          <div class="tip-nav">
-            <button class="tip-nav-btn" onclick="tipPrev()">&larr;</button>
-            <button class="tip-nav-btn primary" onclick="tipRandom()">&#x26A1; Random</button>
-            <button class="tip-nav-btn" onclick="tipNext()">&rarr;</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+</header>
 
-<div class="page" id="page-roadtrip">
-  <div class="nav-bar">
-    <button class="nav-home-btn" onclick="navigate('home')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Home
-    </button>
-    <span class="nav-title">&#x1F6E3;&#xFE0F; Road Trip</span>
-    <div class="nav-right"><div id="rt-loc-display"><span id="rt-loc-text">Locating&hellip;</span></div></div>
-  </div>
-  <div id="roadtrip-inner">
-    <div id="rt-search-bar">
-      <input id="rt-location-input" type="text" placeholder="Suburb, postcode, or lat,lon&hellip;"/>
-      <button class="rt-btn" onclick="rtSearchLocation()">GO</button>
-      <button class="rt-btn rt-btn-ghost" onclick="rtUseGPS()" title="Use GPS">&#x1F4CD;</button>
-      <button class="rt-btn rt-btn-ghost" onclick="rtRefreshAll()" title="Refresh">&#x21BB;</button>
+<div id="offline-banner">⚡ Offline — showing cached data</div>
+<div id="last-updated"></div>
+<div id="ios-hint">Tap <strong>Share</strong> then <strong>Add to Home Screen</strong> to install</div>
+
+<main>
+
+  <!-- WEATHER -->
+  <section id="wx-section">
+    <div class="section-label"><span class="dot"></span>Weather</div>
+    <div class="wx-alert" id="wx-alert"></div>
+    <div id="wx-now" class="wx-now">
+      <div class="wx-card skel" style="height:88px"></div>
+      <div class="wx-card skel" style="height:88px"></div>
+      <div class="wx-card span2 skel" style="height:68px"></div>
     </div>
-    <div id="rt-main">
-      <div id="rt-map-wrap">
-        <div id="rt-map"></div>
-        <div id="rt-map-legend">
-          <div class="leg-item"><div class="rt-leg-dot" style="background:#4a9eff"></div> Weather</div>
-          <div class="leg-item"><div class="rt-leg-dot" style="background:#f85149"></div> Traffic</div>
-          <div class="leg-item"><div class="rt-leg-dot" style="background:#f0a500"></div> Fuel</div>
-          <div class="leg-item"><div class="rt-leg-dot" style="background:#3fb950"></div> Camping</div>
-        </div>
-      </div>
-      <div id="rt-panels">
-        <div class="rt-card" id="rt-card-weather">
-          <div class="rt-card-header" onclick="rtToggleCard('weather')">
-            <div class="rt-card-title"><span>&#x1F326;&#xFE0F;</span> WEATHER</div>
-            <div style="display:flex;align-items:center;gap:8px"><span class="rt-badge rt-badge-load" id="rt-badge-weather">LOADING</span><span class="rt-card-toggle">&#x25BE;</span></div>
-          </div>
-          <div class="rt-card-body" id="rt-body-weather"><div class="rt-loading"><div class="rt-spinner"></div> Fetching weather&hellip;</div></div>
-        </div>
-        <div class="rt-card" id="rt-card-traffic">
-          <div class="rt-card-header" onclick="rtToggleCard('traffic')">
-            <div class="rt-card-title"><span>&#x1F6A6;</span> TRAFFIC</div>
-            <div style="display:flex;align-items:center;gap:8px"><span class="rt-badge rt-badge-load" id="rt-badge-traffic">LOADING</span><span class="rt-card-toggle">&#x25BE;</span></div>
-          </div>
-          <div class="rt-card-body" id="rt-body-traffic"><div class="rt-loading"><div class="rt-spinner"></div> Fetching traffic&hellip;</div></div>
-        </div>
-        <div class="rt-card" id="rt-card-fuel">
-          <div class="rt-card-header" onclick="rtToggleCard('fuel')">
-            <div class="rt-card-title"><span>&#x26FD;</span> FUEL PRICES</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <select id="rt-fuel-type-select" class="rt-fuel-type-select" onclick="event.stopPropagation()" onchange="rtChangeFuelType(this.value)">
-                <option value="E10">E10</option><option value="U91">U91</option>
-                <option value="P95">P95</option><option value="P98">P98</option>
-                <option value="DL">Diesel</option>
-              </select>
-              <span class="rt-badge rt-badge-load" id="rt-badge-fuel">LOADING</span><span class="rt-card-toggle">&#x25BE;</span>
-            </div>
-          </div>
-          <div class="rt-card-body" id="rt-body-fuel"><div class="rt-loading"><div class="rt-spinner"></div> Fetching fuel prices&hellip;</div></div>
-        </div>
-        <div class="rt-card" id="rt-card-camping">
-          <div class="rt-card-header" onclick="rtToggleCard('camping')">
-            <div class="rt-card-title"><span>&#x1F3D5;&#xFE0F;</span> CAMPING &amp; REST AREAS</div>
-            <div style="display:flex;align-items:center;gap:8px"><span class="rt-badge rt-badge-load" id="rt-badge-camping">LOADING</span><span class="rt-card-toggle">&#x25BE;</span></div>
-          </div>
-          <div class="rt-card-body" id="rt-body-camping"><div class="rt-loading"><div class="rt-spinner"></div> Searching campsites&hellip;</div></div>
-        </div>
-      </div>
+    <div class="fc-strip" id="fc-strip">
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
+      <div class="fc-day skel" style="height:90px"></div>
     </div>
+  </section>
+
+  <!-- FUEL -->
+  <section id="fuel-section">
+    <div class="section-label"><span class="dot"></span>Nearest Fuel</div>
+    <div class="fuel-tabs" id="fuel-tabs">
+      <button class="fuel-tab active" data-type="E10">E10</button>
+      <button class="fuel-tab" data-type="U91">U91</button>
+      <button class="fuel-tab" data-type="P95">P95</button>
+      <button class="fuel-tab" data-type="P98">P98</button>
+      <button class="fuel-tab" data-type="DL">Diesel</button>
+    </div>
+    <div class="fuel-list" id="fuel-list">
+      <div class="skel" style="height:68px; border-radius:10px"></div>
+      <div class="skel" style="height:68px; border-radius:10px"></div>
+      <div class="skel" style="height:68px; border-radius:10px"></div>
+    </div>
+  </section>
+
+  <!-- CAMPING -->
+  <section id="camp-section">
+    <div class="section-label"><span class="dot"></span>Nearby Camping</div>
+    <div class="camp-list" id="camp-list">
+      <div class="skel" style="height:96px; border-radius:10px"></div>
+      <div class="skel" style="height:96px; border-radius:10px"></div>
+    </div>
+  </section>
+
+  <!-- TRAFFIC -->
+  <section id="traffic-section">
+    <div class="section-label"><span class="dot"></span>Traffic Incidents</div>
+    <div class="traffic-list" id="traffic-list">
+      <div class="skel" style="height:72px; border-radius:10px"></div>
+      <div class="skel" style="height:72px; border-radius:10px"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="install-banner">
+  <div class="install-text">
+    <strong>Install Road Trip</strong>
+    <span>Works offline · lives on your home screen</span>
   </div>
+  <button id="install-btn">Install</button>
+  <button id="install-dismiss">×</button>
 </div>
 
 <script>
-'use strict';
+const WORKER         = 'https://spring-sky-90bc.jlmackay.workers.dev';
+const CACHE_KEY      = 'rt_v2';
+const FUEL_RADIUS    = 10;
+const CAMP_RADIUS    = 100;
+const TRAFFIC_RADIUS = 50;
 
-// ============================================================
-//  MODULE-LEVEL VARIABLES — ALL declared here, before init()
-//  `let` and `const` are NOT hoisted. Any variable referenced
-//  during init() (or in functions called by init()) MUST live
-//  here. Function declarations ARE hoisted so they can go anywhere.
-// ============================================================
+let coords          = null;
+let activeFuelType  = 'E10';
+let allFuelStations = [];
+let deferredPrompt  = null;
 
-// Worker base URL
-const WORKER = 'https://spring-sky-90bc.jlmackay.workers.dev';
-
-// News / Digest state
-const NEWS_FEEDS = {
-  'ABC AU':      'https://www.abc.net.au/news/feed/51120/rss.xml',
-  'BBC':         'https://feeds.bbci.co.uk/news/rss.xml',
-  'Guardian AU': 'https://www.theguardian.com/australia-news/rss',
-  'Al Jazeera':  'https://www.aljazeera.com/xml/rss/all.xml',
-  'SBS News':    'https://www.sbs.com.au/news/feed',
+const WX_DESC = {
+  0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Fog', 48:'Icy fog',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains',
+  80:'Light showers', 81:'Showers', 82:'Heavy showers',
+  85:'Snow showers', 86:'Heavy snow showers',
+  95:'Thunderstorm', 96:'Thunderstorm + hail', 99:'Severe thunderstorm'
 };
-let digestCache    = null;    // null = not yet loaded; {html, ts} when cached
-let activeNewsFeed = 'ABC AU';
+const WX_ICON = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌧️',61:'🌦️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'❄️',75:'❄️',77:'🌨️',
+  80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'❄️',
+  95:'⛈️',96:'⛈️',99:'⛈️'
+};
+const TRAFFIC_CAT = {
+  0:'Unknown',1:'Accident',2:'Fog',3:'Dangerous conditions',
+  4:'Rain',5:'Ice',6:'Traffic jam',7:'Lane closed',8:'Road closed',
+  9:'Road works',10:'Wind',11:'Flooding',14:'Broken down vehicle'
+};
 
-// Talks state
-let allTalks  = [];
-let talkIndex = 0;
+// Offline
+function syncOffline() { document.body.classList.toggle('is-offline', !navigator.onLine); }
+window.addEventListener('online', syncOffline);
+window.addEventListener('offline', syncOffline);
+syncOffline();
 
-// Tips state
-let tipIndex = 0;
-
-// Road Trip state
-let rtMapInitialised = false;
-let rtMap            = null;
-let rtUserMarker     = null;
-const rtLayers  = { weather: [], traffic: [], fuel: [], camping: [] };
-const rtState   = { lat: -33.8688, lon: 151.2093, locationName: 'Sydney, NSW' };
-const RT_CONFIG = { WORKER_URL: 'https://spring-sky-90bc.jlmackay.workers.dev', RADIUS_KM: 50, FUEL_TYPE: 'E10', FORECAST_DAYS: 4 };
-
-// ============================================================
-//  TIPS DATA
-// ============================================================
-const TIPS = [{"id":1,"tip":"Always register your trip with someone before heading out — they can alert rescue services if you don't return on time.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"preparation"},{"id":2,"tip":"Walk at the pace of your slowest group member, and give that person the map.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"navigation"},{"id":3,"tip":"Break in your boots before any long walk — new boots on a long trip guarantees blisters.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"preparation"},{"id":4,"tip":"Pack spare dry clothing on every trip, even short ones — wet leads to cold, cold leads to hypothermia.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"preparation"},{"id":5,"tip":"Carry a traditional compass even if you have GPS — batteries fail in the field.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"navigation"},{"id":6,"tip":"Layer your clothing: multiple thin layers outperform one thick one for insulation.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"shelter"},{"id":7,"tip":"When you stop moving, immediately put your outer layer back on — you lose heat fast when exercise stops.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"shelter"},{"id":8,"tip":"Assume any water source is contaminated unless you know otherwise — always purify.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"water"},{"id":9,"tip":"Boil water for at least five minutes after filtering to guarantee safety.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"water"},{"id":10,"tip":"Favour small, fast-running streams over lakes or sluggish water — less likely to be contaminated.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"water"},{"id":11,"tip":"Pack food for two extra days beyond your planned trip length.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"food"},{"id":12,"tip":"In bear country, store food 150ft from your tent, with your cooking zone 150ft from both — triangle layout.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"food"},{"id":13,"tip":"After water, shelter is your top priority in any survival situation.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"shelter"},{"id":14,"tip":"Don't camp near rivers — flood risk is real even when skies are clear upstream.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"shelter"},{"id":15,"tip":"Ventilate your shelter if keeping a fire inside — carbon monoxide buildup can kill you silently.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"shelter"},{"id":16,"tip":"Collect three grades of firewood: tinder, twigs, then logs — build the fire in stages.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"fire"},{"id":17,"tip":"Build your fire on and surrounded by stones to contain it; keep loose earth and water nearby.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"fire"},{"id":18,"tip":"Break your route into short, landmark-to-landmark stages — 10 x 1-mile legs beat navigating a 10-mile stretch blind.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"navigation"},{"id":19,"tip":"If lost in bad weather, stop and shelter — wait for it to clear before navigating out.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"navigation"},{"id":20,"tip":"In a group with an injury, the minimum split is three: one injured, one to stay, one to go for help.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":21,"tip":"Only send people for help if they can reach safety before dark — fragmenting the group after dark makes things worse.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"navigation"},{"id":22,"tip":"Never use your thumb to check for a pulse — you'll feel your own blood vessel and get a false reading.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":23,"tip":"Don't apply a tourniquet unless you know what you're doing — it can cause more damage than it prevents.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":24,"tip":"For burns, irrigate with water for at least 10–30 minutes before dressing.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":25,"tip":"With hypothermia, if no dry clothes are available, leave wet ones on and pile on insulation — removing them loses trapped heat.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":26,"tip":"The most effective field treatment for hypothermia is body-to-body heat transfer — two people back-to-back under cover.","book":"Wilderness Survival Tools","author":"Michael Hansen","category":"first aid"},{"id":27,"tip":"Most hypothermia cases occur between 30–50°F, not in extreme cold — don't wait for a blizzard to start worrying.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":28,"tip":"If a shivering person suddenly stops shivering, don't assume they warmed up — they may have gotten worse.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":29,"tip":"If your feet are cold, put on a hat — up to 80% of body heat escapes through the head.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"shelter"},{"id":30,"tip":"Never give alcohol to a hypothermia victim — it accelerates heat loss despite feeling warm.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":31,"tip":"A person who appears dead from cold is not necessarily dead — people have been revived with no permanent damage.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":32,"tip":"Don't rub frostbitten tissue with snow or massage it — this causes further damage to already frozen cells.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":33,"tip":"It's better to walk out on a frostbitten foot than to rewarm it in the field and risk it refreezing.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":34,"tip":"Dehydration increases frostbite risk — less circulating blood means less warmth reaching fingers and toes.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"first aid"},{"id":35,"tip":"Don't build a fire directly on snow — it will sink. Lay green logs as a platform or dig down to bare earth first.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"fire"},{"id":36,"tip":"Avoid using wet or stream-bed rocks around a fire — trapped moisture can cause them to explode when heated.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"fire"},{"id":37,"tip":"Gather a double handful of tinder before starting a fire — and store a spare handful somewhere dry for morning.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"fire"},{"id":38,"tip":"Dead limbs from standing trees burn better than windfalls — they've absorbed less ground moisture.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"fire"},{"id":39,"tip":"A snow cave can shelter up to 16 people — if you see blue light through the roof while digging, stop: the ceiling is too thin.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"shelter"},{"id":40,"tip":"Build sleeping platforms higher than the entrance in a snow shelter — cold air sinks and pools at the lowest point.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"shelter"},{"id":41,"tip":"Check natural shelters like caves for animals, gas pockets, and unstable ceilings before settling in.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"shelter"},{"id":42,"tip":"Ice makes more water per volume than snow — it takes 3–4 cups of snow to yield one cup of water.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"water"},{"id":43,"tip":"Filters with openings larger than 0.03 microns won't stop Cryptosporidium — know your filter's limits.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"water"},{"id":44,"tip":"Drink 6–8 quarts of water per day in cold environments — dehydration is easy to miss when you're not sweating visibly.","book":"USMC Winter Survival Course Handbook","author":"US Marine Corps","category":"water"},{"id":45,"tip":"Harvest sweet corn and new potatoes promptly — once the plant ages, sugar converts to starch and flavour is lost.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":46,"tip":"Don't let root vegetables like carrots or beets stay in the ground a second year — the stored energy goes to seeds and the root becomes tough.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":47,"tip":"Rotate brassica crops — club root organisms can persist in soil for over 20 years.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":48,"tip":"Don't compost diseased plants — burn them. Putting disease in the compost heap spreads it back to your garden.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":49,"tip":"A compost heap needs air, moisture, and nitrogen — without all three, decomposition is slow and incomplete.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":50,"tip":"Mix rich green material like grass clippings with woody waste in the compost heap — carbon and nitrogen need to be balanced.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":51,"tip":"Yeast dies above 95°F and won't multiply below 48°F — bread rises best at around 80°F.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":52,"tip":"Tap the bottom of a loaf to test if it's done — a hollow sound means it's ready.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":53,"tip":"When transplanting small seedlings, hold them by the seed leaves, never by the stem — bruising the stem kills them.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"food"},{"id":54,"tip":"Energy saved is as good as energy bought — insulation and passive design beat any fuel source.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"preparation"},{"id":55,"tip":"Don't try to do everything at once when building self-sufficiency — master one skill before adding another.","book":"The New Complete Book of Self-Sufficiency","author":"John Seymour","category":"preparation"},{"id":56,"tip":"When using a map and compass, always orient the map to the terrain first — most navigation errors come from reading the map in your hand orientation, not the ground's.","book":null,"author":null,"category":"navigation"},{"id":57,"tip":"Pace counting is more reliable than time estimates — count your steps over a known distance and use that to track how far you've walked.","book":null,"author":null,"category":"navigation"},{"id":58,"tip":"In fog or whiteout, trust your compass over your gut — the human sense of direction is easily fooled and will walk you in circles.","book":null,"author":null,"category":"navigation"},{"id":59,"tip":"Ridgelines and river valleys are nature's highways — when lost, follow water downhill to find civilisation.","book":null,"author":null,"category":"navigation"},{"id":60,"tip":"Take a bearing on your destination before you enter dense bush — you can't see where you're going inside it, so know the direction before you commit.","book":null,"author":null,"category":"navigation"},{"id":61,"tip":"Collect morning dew by dragging an absorbent cloth through grass at dawn — a useful supplement when no stream is nearby.","book":null,"author":null,"category":"water"},{"id":62,"tip":"A solar still produces only a small amount of water for significant effort — useful in true emergencies, but not a primary strategy.","book":null,"author":null,"category":"water"},{"id":63,"tip":"Drink water before you feel thirsty — thirst is a late signal of dehydration, not an early warning.","book":null,"author":null,"category":"water"},{"id":64,"tip":"Clear urine means you're well hydrated; dark yellow means drink more; brown is an emergency.","book":null,"author":null,"category":"water"},{"id":65,"tip":"Never eat snow to hydrate in cold conditions — your body burns more energy melting it than you gain, accelerating hypothermia.","book":null,"author":null,"category":"water"},{"id":66,"tip":"Build your fire before you need it — cold, wet, and panicked hands are terrible at making fire.","book":null,"author":null,"category":"fire"},{"id":67,"tip":"A fire reflector — a wall of logs or rocks behind the fire — can double the heat directed at your shelter.","book":null,"author":null,"category":"fire"},{"id":68,"tip":"Carry at least three ignition methods: lighter, waterproof matches, and a firesteel — each can fail independently.","book":null,"author":null,"category":"fire"},{"id":69,"tip":"Petroleum jelly on cotton balls is one of the best homemade fire starters — waterproof, lightweight, and burns for several minutes.","book":null,"author":null,"category":"fire"},{"id":70,"tip":"A fire needs oxygen — don't pack tinder and kindling so tightly that you smother it before it takes hold.","book":null,"author":null,"category":"fire"},{"id":71,"tip":"Insulation from the ground is more important than insulation above you — cold ground pulls heat from your body far faster than cold air.","book":null,"author":null,"category":"shelter"},{"id":72,"tip":"A smaller shelter retains body heat far better than a large one — build only as big as you need.","book":null,"author":null,"category":"shelter"},{"id":73,"tip":"Dry leaves packed 30cm deep make a sleeping mat that can keep you warm at freezing temperatures.","book":null,"author":null,"category":"shelter"},{"id":74,"tip":"A tarp pitched low and tight will handle a storm better than one pitched high and roomy.","book":null,"author":null,"category":"shelter"},{"id":75,"tip":"Never sleep directly on bare ground — even in summer, soil temperature is cold enough to cause hypothermia over a long night.","book":null,"author":null,"category":"shelter"},{"id":76,"tip":"Stop bleeding before doing anything else — blood loss kills faster than infection, dehydration, or almost anything else in the field.","book":null,"author":null,"category":"first aid"},{"id":77,"tip":"Blisters form from friction and moisture — at the first hot spot, tape it before it blisters. Once it blisters, it's too late for prevention.","book":null,"author":null,"category":"first aid"},{"id":78,"tip":"Twisted ankles happen on the way out, not the way in — move carefully when you're tired, because that's when most injuries occur.","book":null,"author":null,"category":"first aid"},{"id":79,"tip":"Signs of heat exhaustion: heavy sweating, cold clammy skin, weak pulse. Signs of heat stroke: hot dry skin, confusion, no sweating — the second is a life-threatening emergency.","book":null,"author":null,"category":"first aid"},{"id":80,"tip":"For snake bite: keep the limb at or below heart level, remove rings and watches, and get to medical help fast — don't cut, suck, or apply tourniquets.","book":null,"author":null,"category":"first aid"},{"id":81,"tip":"If you don't know what it is, don't eat it — starvation takes weeks; a poisonous plant can kill in hours.","book":null,"author":null,"category":"food"},{"id":82,"tip":"Universal edibility test: rub the plant on skin, wait 15 min; touch to lip, wait 3 min; chew but don't swallow, wait 15 min — only then eat a small amount and wait hours.","book":null,"author":null,"category":"food"},{"id":83,"tip":"Most insects are edible and calorie-dense — remove wings and legs, cook them, and they're a reliable protein source in a pinch.","book":null,"author":null,"category":"food"},{"id":84,"tip":"Fish are most active at dawn and dusk — if you're fishing for survival, those are the hours worth fishing.","book":null,"author":null,"category":"food"},{"id":85,"tip":"Calorie needs increase dramatically in cold and at altitude — what's enough food at sea level may leave you depleted in the mountains.","book":null,"author":null,"category":"food"},{"id":86,"tip":"The ten essentials: navigation, sun protection, insulation, illumination, first aid, fire, repair tools, nutrition, hydration, shelter — never leave for the backcountry without all ten.","book":null,"author":null,"category":"preparation"},{"id":87,"tip":"A whistle carries three times further than a voice and costs almost nothing — it should be on your person, not in your pack.","book":null,"author":null,"category":"preparation"},{"id":88,"tip":"Check the weather forecast for the full duration of your trip, not just the day you leave.","book":null,"author":null,"category":"preparation"},{"id":89,"tip":"Your shelter, sleeping bag, and insulation layers should all fit inside a dry bag — everything else can get wet, those three can't.","book":null,"author":null,"category":"preparation"},{"id":90,"tip":"Know how to signal for rescue: three of anything — three whistle blasts, three fires in a triangle — is the universal distress signal.","book":null,"author":null,"category":"preparation"},{"id":91,"tip":"STOP: Stop, Think, Observe, Plan — the first thing to do when you realise you might be in trouble is to not make it worse.","book":null,"author":null,"category":"preparation"},{"id":92,"tip":"Most outdoor fatalities involve a chain of small decisions, each one seeming reasonable — learn to notice when you're making exception after exception.","book":null,"author":null,"category":"preparation"},{"id":93,"tip":"Turn back time: decide in advance at what point you will turn around, regardless of how close the summit or destination seems.","book":null,"author":null,"category":"navigation"},{"id":94,"tip":"Exhaustion is the enemy of good decisions — rest before you need to, not after the situation has already degraded.","book":null,"author":null,"category":"preparation"},{"id":95,"tip":"Rescue teams search based on where people are most likely to go — if you deviate from your filed route, your margin for error disappears.","book":null,"author":null,"category":"navigation"},{"id":96,"tip":"Keep your core warm and your extremities will follow — if your hands are cold, put on a vest, not just gloves.","book":null,"author":null,"category":"shelter"},{"id":97,"tip":"Wet cotton kills — in cold weather, cotton base layers are dangerous because they hold moisture against your skin with no insulating value.","book":null,"author":null,"category":"shelter"},{"id":98,"tip":"Eat before sleeping in cold conditions — your body burns calories all night to keep you warm, and it needs fuel to do so.","book":null,"author":null,"category":"food"},{"id":99,"tip":"Wiggle your toes regularly in cold conditions — the motion keeps blood circulating and is the earliest defence against frostbite.","book":null,"author":null,"category":"first aid"},{"id":100,"tip":"In cold weather, loosen your boots when stopping for the night — tight boots restrict circulation and accelerate cold injury.","book":null,"author":null,"category":"first aid"}];
-
-// ============================================================
-//  INIT — all module-level variables above are initialised before this runs
-// ============================================================
-(function init() {
-  const now = new Date();
-  const h = now.getHours();
-  document.getElementById('home-greeting').textContent = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-  document.getElementById('home-date').textContent = now.toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  tipRender(tipDailyIndex());
-  newsCardInit();
-  talksLoad();
-}());
-
-// ============================================================
-//  UTILITIES
-// ============================================================
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// iOS hint
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone && !localStorage.getItem('ios_hint_done')) {
+  document.getElementById('ios-hint').classList.add('show');
 }
 
-// ============================================================
-//  ROUTER
-// ============================================================
-function navigate(page) {
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  document.getElementById('page-' + page).classList.add('active');
-  if (page === 'roadtrip' && !rtMapInitialised) {
-    rtMapInitialised = true;
-    setTimeout(function(){ rtInitMap(); rtBoot(); }, 120);
+// Android install
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('install_dismissed')) {
+    document.getElementById('install-banner').classList.add('show');
   }
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+document.getElementById('install-dismiss').addEventListener('click', () => {
+  localStorage.setItem('install_dismissed', '1');
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// Cache
+function saveCache(data) { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); }
+function loadCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch { return null; } }
+function setLastUpdated(ts) {
+  const el = document.getElementById('last-updated');
+  if (!ts) return;
+  const m = Math.round((Date.now() - ts) / 60000);
+  el.textContent = m < 2 ? 'Updated just now' : `Updated ${m} min ago`;
 }
 
-// ============================================================
-//  TIPS
-// ============================================================
-function tipDailyIndex() {
-  var d = new Date();
-  return (d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate()) % TIPS.length;
-}
-function tipRender(idx) {
-  tipIndex = ((idx % TIPS.length) + TIPS.length) % TIPS.length;
-  var t = TIPS[tipIndex];
-  document.getElementById('tip-text').textContent = t.tip;
-  document.getElementById('tip-cat-badge').textContent = t.category;
-  document.getElementById('tip-counter').textContent = (tipIndex+1) + ' / ' + TIPS.length;
-  document.getElementById('tip-source').textContent = t.book || '';
-}
-function tipNext()   { tipRender(tipIndex + 1); }
-function tipPrev()   { tipRender(tipIndex - 1); }
-function tipRandom() { tipRender(Math.floor(Math.random() * TIPS.length)); }
-
-// ============================================================
-//  NEWS CARD
-// ============================================================
-function newsCardInit() {
-  newsSetTab('summary');
-  digestLoad();
-  newsLoad(activeNewsFeed);
-}
-
-function newsSetTab(tab) {
-  document.querySelectorAll('.news-main-tab').forEach(function(btn){
-    btn.classList.toggle('active', btn.dataset.tab === tab);
+// Location
+function getLocation() {
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) return rej(new Error('No geolocation'));
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      rej,
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
   });
-  document.getElementById('news-summary-panel').style.display  = tab === 'summary'   ? '' : 'none';
-  document.getElementById('news-headlines-panel').style.display = tab === 'headlines' ? '' : 'none';
+}
+async function reverseGeocode(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const d = await r.json();
+    const a = d.address;
+    return a.suburb || a.town || a.village || a.county || 'Your location';
+  } catch { return 'Your location'; }
 }
 
-function digestRefresh() {
-  digestCache = null;
-  digestLoad();
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-async function digestLoad() {
-  var body = document.getElementById('digest-body');
-  var btn  = document.getElementById('digest-refresh-btn');
-  if (!body) return;
-  if (digestCache && (Date.now() - digestCache.ts) < 30 * 60 * 1000) {
-    body.innerHTML = digestCache.html;
+// ── Weather ───────────────────────────────────────────────────────────────────
+async function fetchWeather(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    + `&hourly=temperature_2m,precipitation_probability,weathercode`
+    + `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum`
+    + `&timezone=auto&forecast_days=7`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Weather failed');
+  return r.json();
+}
+
+function renderWeather(data) {
+  const { daily, hourly } = data;
+  const hour = new Date().getHours();
+  const tempNow      = hourly.temperature_2m[hour]             ?? daily.temperature_2m_max[0];
+  const rainNow      = hourly.precipitation_probability[hour]  ?? daily.precipitation_probability_max[0];
+  const wxCode       = hourly.weathercode[hour]                ?? daily.weathercode[0];
+  const todayMax     = daily.temperature_2m_max[0];
+  const todayMin     = daily.temperature_2m_min[0];
+  const todayRainPct = daily.precipitation_probability_max[0];
+  const todayRainMm  = daily.precipitation_sum[0];
+
+  const alertEl = document.getElementById('wx-alert');
+  const alerts  = [];
+  if (todayMax     >= 35) alerts.push(`🔥 Heat warning: ${todayMax}°C forecast today`);
+  if (todayMin     <= 2)  alerts.push(`🧊 Near-freezing overnight: ${todayMin}°C`);
+  if (todayRainPct >= 70) alerts.push(`⛈️ High rain chance: ${todayRainPct}%`);
+  if (todayRainMm  >= 20) alerts.push(`🌧️ Heavy rain: up to ${todayRainMm}mm today`);
+  alertEl.innerHTML = alerts.join('<br>');
+  alertEl.classList.toggle('show', alerts.length > 0);
+
+  document.getElementById('wx-now').innerHTML = `
+    <div class="wx-card">
+      <div class="wx-label">Now</div>
+      <div class="wx-val c-text">${Math.round(tempNow)}°C</div>
+      <div class="wx-sub">${WX_DESC[wxCode] ?? ''} ${WX_ICON[wxCode] ?? ''}</div>
+    </div>
+    <div class="wx-card">
+      <div class="wx-label">Rain chance</div>
+      <div class="wx-val c-rain">${rainNow}%</div>
+      <div class="wx-sub">${todayRainMm}mm today</div>
+    </div>
+    <div class="wx-card span2">
+      <div class="wx-label">Today's range</div>
+      <div class="wx-range">
+        <div class="wx-range-item"><div class="wx-val c-heat">${Math.round(todayMax)}°</div><div class="wx-sub">max</div></div>
+        <div class="wx-range-sep">—</div>
+        <div class="wx-range-item"><div class="wx-val c-cold">${Math.round(todayMin)}°</div><div class="wx-sub">min</div></div>
+      </div>
+    </div>
+  `;
+
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('fc-strip').innerHTML = daily.weathercode.map((code, i) => {
+    const name = i === 0 ? 'Today' : days[new Date(daily.time[i]).getDay()];
+    return `
+      <div class="fc-day${i === 0 ? ' today' : ''}">
+        <div class="fc-name">${name}</div>
+        <span class="fc-icon">${WX_ICON[code] ?? '🌡️'}</span>
+        <div class="fc-hi">${Math.round(daily.temperature_2m_max[i])}°</div>
+        <div class="fc-lo">${Math.round(daily.temperature_2m_min[i])}°</div>
+        <div class="fc-rain">${daily.precipitation_probability_max[i]}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Fuel ──────────────────────────────────────────────────────────────────────
+async function fetchFuel(lat, lon) {
+  const r = await fetch(`${WORKER}/fuel?lat=${lat}&lon=${lon}&radius=${FUEL_RADIUS}`);
+  if (!r.ok) throw new Error(`Fuel ${r.status}`);
+  return r.json();
+}
+
+function renderFuel(stations, type) {
+  const el       = document.getElementById('fuel-list');
+  const filtered = stations.filter(s => s.prices?.[type] != null).sort((a,b) => a.prices[type] - b.prices[type]);
+  if (!filtered.length) { el.innerHTML = `<div class="err">No ${type} data within ${FUEL_RADIUS} km</div>`; return; }
+  const cheapest = filtered[0].prices[type];
+  el.innerHTML = filtered.slice(0, 6).map((s, i) => {
+    const isCheap = i === 0 && s.prices[type] === cheapest;
+    const priceRows = Object.entries(s.prices).filter(([,v]) => v != null).map(([k,v]) => `
+      <div class="fuel-price-row">
+        <span class="fuel-type-tag">${k}</span>
+        <span class="fuel-price-val${k === type ? '' : ' dim'}">${v}</span>
+        <span class="fuel-price-unit">¢</span>
+      </div>`).join('');
+    return `
+      <div class="fuel-card${isCheap ? ' cheapest' : ''}">
+        <div>
+          <div class="fuel-name">${s.name}</div>
+          <div class="fuel-meta">${s.address ?? ''} · ${s.distance != null ? s.distance.toFixed(1)+' km' : ''}</div>
+          ${isCheap ? '<div class="fuel-badge">CHEAPEST NEARBY</div>' : ''}
+        </div>
+        <div class="fuel-prices">${priceRows}</div>
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('fuel-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.fuel-tab');
+  if (!tab) return;
+  document.querySelectorAll('.fuel-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  activeFuelType = tab.dataset.type;
+  if (allFuelStations.length) renderFuel(allFuelStations, activeFuelType);
+});
+
+// ── Camping ───────────────────────────────────────────────────────────────────
+async function fetchCamping(lat, lon) {
+  const r = await fetch(`${WORKER}/camping?lat=${lat}&lon=${lon}&radius=${CAMP_RADIUS}`);
+  if (!r.ok) throw new Error(`Camping ${r.status}`);
+  return r.json();
+}
+
+function renderCamping(sites) {
+  const el = document.getElementById('camp-list');
+  if (!sites?.length) { el.innerHTML = `<div class="err">No campsites within ${CAMP_RADIUS} km</div>`; return; }
+  el.innerHTML = sites.map(s => {
+    const tags = (s.tags ?? []).map(t =>
+      `<span class="camp-tag${t==='Free'?' free':t==='National Park'?' national':''}">${t}</span>`
+    ).join('');
+    const bookBtn = s.booking_url
+      ? `<a class="camp-btn primary" href="${s.booking_url}" target="_blank" rel="noopener">Book / Check →</a>`
+      : '<span class="camp-tag free" style="padding:5px 10px">Free camp</span>';
+    return `
+      <div class="camp-card">
+        <div class="camp-head">
+          <div class="camp-name">${s.name}</div>
+          <div class="camp-dist">${s.distance != null ? s.distance.toFixed(1)+' km' : ''}</div>
+        </div>
+        <div class="camp-tags">${tags}</div>
+        <div class="camp-actions">
+          ${bookBtn}
+          <a class="camp-btn secondary" href="https://maps.google.com/?q=${s.lat},${s.lon}" target="_blank" rel="noopener">Map</a>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Traffic ───────────────────────────────────────────────────────────────────
+async function fetchTraffic(lat, lon) {
+  const r = await fetch(`${WORKER}/traffic?lat=${lat}&lon=${lon}&radius=${TRAFFIC_RADIUS}`);
+  if (!r.ok) throw new Error(`Traffic ${r.status}`);
+  return r.json();
+}
+
+function renderTraffic(data) {
+  const el        = document.getElementById('traffic-list');
+  const incidents = data?.incidents ?? [];
+  if (!incidents.length) {
+    el.innerHTML = `<div class="traffic-ok">✓ No incidents within ${TRAFFIC_RADIUS} km</div>`;
     return;
   }
-  body.innerHTML = '<div class="digest-loading"><div class="digest-spinner"></div> Generating digest&hellip;</div>';
-  if (btn) btn.classList.add('spinning');
+  const sorted = incidents
+    .filter(i => i.properties)
+    .sort((a,b) => (b.properties.magnitudeOfDelay ?? 0) - (a.properties.magnitudeOfDelay ?? 0))
+    .slice(0, 8);
+  el.innerHTML = sorted.map(inc => {
+    const p     = inc.properties;
+    const mag   = p.magnitudeOfDelay ?? 0;
+    const desc  = p.events?.[0]?.description ?? TRAFFIC_CAT[p.iconCategory] ?? 'Incident';
+    const roads = (p.roadNumbers ?? []).join(', ');
+    const route = (p.from && p.to) ? `${p.from} → ${p.to}` : (p.from || p.to || '');
+    const delay = p.delay ? `+${Math.round(p.delay/60)} min` : '';
+    const sevClass = mag >= 3 ? 'sev-3' : mag >= 2 ? 'sev-2' : mag >= 1 ? 'sev-1' : 'sev-0';
+    const sevLabel = mag >= 3 ? 'Major' : mag >= 2 ? 'Moderate' : mag >= 1 ? 'Minor' : 'Low';
+    return `
+      <div class="traffic-card${mag >= 3 ? ' severe' : ''}">
+        <div class="traffic-head">
+          <div class="traffic-road">${roads || TRAFFIC_CAT[p.iconCategory] || 'Incident'}</div>
+          ${delay ? `<div class="traffic-delay">${delay}</div>` : ''}
+        </div>
+        <div class="traffic-desc">${desc}</div>
+        ${route ? `<div class="traffic-route">${route}</div>` : ''}
+        <span class="traffic-severity ${sevClass}">${sevLabel}</span>
+      </div>`;
+  }).join('');
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function loadAll() {
+  const cached = loadCache();
+  if (cached?.data) {
+    try {
+      if (cached.data.weather) renderWeather(cached.data.weather);
+      if (cached.data.fuel)    { allFuelStations = cached.data.fuel; renderFuel(allFuelStations, activeFuelType); }
+      if (cached.data.camping) renderCamping(cached.data.camping);
+      if (cached.data.traffic) renderTraffic(cached.data.traffic);
+      setLastUpdated(cached.ts);
+    } catch(e) { console.warn('Cache render:', e); }
+  }
+
+  if (!navigator.onLine) return;
+
   try {
-    var r = await fetch(WORKER + '/digest');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var d = await r.json();
-    var html = '';
-    if (d.commentary) {
-      var lines = d.commentary.split('\n');
-      var parts = [];
-      var inList = false;
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (!line) { if (inList) { parts.push('</ul>'); inList = false; } continue; }
-        var hm = line.match(/^\*\*(.+?)\*\*\s*$/);
-        if (hm) {
-          if (inList) { parts.push('</ul>'); inList = false; }
-          parts.push('<h4 class="digest-section">' + escHtml(hm[1]) + '</h4>');
-        } else if (line.startsWith('- ')) {
-          if (!inList) { parts.push('<ul class="digest-list">'); inList = true; }
-          parts.push('<li>' + escHtml(line.slice(2).trim()) + '</li>');
-        } else {
-          if (inList) { parts.push('</ul>'); inList = false; }
-          parts.push('<p>' + escHtml(line) + '</p>');
-        }
-      }
-      if (inList) parts.push('</ul>');
-      html = '<div class="digest-body">' +
-        parts.join('') +
-        '<div class="digest-ts">Updated ' + new Date(d.generatedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}) + '</div>' +
-        '</div>';
-    } else if (d.headlines && d.headlines.length) {
-      html = '<div class="digest-body">' +
-        d.headlines.slice(0,8).map(function(h){ return '<p>&bull; ' + escHtml(h) + '</p>'; }).join('') +
-        '</div>';
-    } else {
-      html = '<div class="digest-error">&#x26A0;&#xFE0F; No digest available. Try refreshing.</div>';
-    }
-    digestCache = { html: html, ts: Date.now() };
-    body.innerHTML = html;
-  } catch(e) {
-    body.innerHTML = '<div class="digest-error">&#x26A0;&#xFE0F; Could not load digest: ' + escHtml(e.message) + '</div>';
-  } finally {
-    if (btn) btn.classList.remove('spinning');
-  }
-}
-
-function newsLoad(name) {
-  activeNewsFeed = name || activeNewsFeed;
-  var tabs = document.getElementById('news-feed-tabs');
-  if (tabs) {
-    tabs.innerHTML = Object.keys(NEWS_FEEDS).map(function(n){
-      return '<button class="news-tab-btn' + (n === activeNewsFeed ? ' active' : '') + '" onclick="newsLoad(\'' + escHtml(n) + '\')">' + escHtml(n) + '</button>';
-    }).join('');
-  }
-  var list = document.getElementById('news-list');
-  if (!list) return;
-  list.innerHTML = '<div class="news-status">&#x23F3; Loading&hellip;</div>';
-  fetchNewsItems(NEWS_FEEDS[activeNewsFeed])
-    .then(function(items) {
-      if (!items.length) throw new Error('empty');
-      list.innerHTML = items.map(function(i){
-        return '<div class="news-item"><a href="' + escHtml(i.link) + '" target="_blank" rel="noopener">' + escHtml(i.title) + '</a>' +
-          '<div class="news-item-meta">' + escHtml(activeNewsFeed) + (i.date ? ' &middot; ' + i.date : '') + '</div></div>';
-      }).join('');
-    })
-    .catch(function(){
-      list.innerHTML = '<div class="news-status err">&#x26A0;&#xFE0F; Could not load ' + escHtml(activeNewsFeed) + '. Try another feed.</div>';
+    coords = await getLocation();
+  } catch {
+    document.getElementById('loc-text').textContent = 'Location denied';
+    if (!cached) ['wx-now','fuel-list','camp-list','traffic-list'].forEach(id => {
+      document.getElementById(id).innerHTML = `<div class="err">Enable location to load data</div>`;
     });
-}
+    return;
+  }
 
-function parseRssXml(text) {
-  var xml = new DOMParser().parseFromString(text, 'application/xml');
-  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
-  return Array.from(xml.querySelectorAll('item')).slice(0,12).map(function(item){
-    var title  = (item.querySelector('title') && item.querySelector('title').textContent.trim()) || 'Untitled';
-    var linkEl = item.querySelector('link');
-    var link   = '#';
-    if (linkEl) {
-      var tc = linkEl.textContent && linkEl.textContent.trim();
-      var ns = linkEl.nextSibling && linkEl.nextSibling.nodeValue && linkEl.nextSibling.nodeValue.trim();
-      link = (tc && tc.startsWith('http')) ? tc : (ns && ns.startsWith('http')) ? ns : '#';
-    }
-    var pub = (item.querySelector('pubDate') && item.querySelector('pubDate').textContent) || '';
-    return { title: title, link: link, date: pub ? new Date(pub).toLocaleDateString('en-AU',{month:'short',day:'numeric'}) : '' };
+  reverseGeocode(coords.lat, coords.lon).then(name => {
+    document.getElementById('loc-text').textContent = name;
   });
+
+  const [wx, fuel, camp, traffic] = await Promise.allSettled([
+    fetchWeather(coords.lat, coords.lon),
+    fetchFuel(coords.lat, coords.lon),
+    fetchCamping(coords.lat, coords.lon),
+    fetchTraffic(coords.lat, coords.lon),
+  ]);
+
+  const cd = cached?.data ?? {};
+
+  if (wx.status === 'fulfilled')      { renderWeather(wx.value);                                             cd.weather = wx.value; }
+  else if (!cached)                   { document.getElementById('wx-now').innerHTML = `<div class="err" style="grid-column:1/-1">Weather unavailable</div>`; document.getElementById('fc-strip').innerHTML = ''; }
+
+  if (fuel.status === 'fulfilled')    { allFuelStations = fuel.value.stations ?? []; renderFuel(allFuelStations, activeFuelType); cd.fuel = allFuelStations; }
+  else if (!cached)                   { document.getElementById('fuel-list').innerHTML = `<div class="err">Fuel data unavailable</div>`; }
+
+  if (camp.status === 'fulfilled')    { const sites = camp.value.sites ?? []; renderCamping(sites);          cd.camping = sites; }
+  else if (!cached)                   { document.getElementById('camp-list').innerHTML = `<div class="err">Camping data unavailable</div>`; }
+
+  if (traffic.status === 'fulfilled') { renderTraffic(traffic.value);                                        cd.traffic = traffic.value; }
+  else if (!cached)                   { document.getElementById('traffic-list').innerHTML = `<div class="err">Traffic data unavailable</div>`; }
+
+  saveCache(cd);
+  setLastUpdated(Date.now());
 }
 
-async function fetchNewsItems(rssUrl) {
-  try {
-    var r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl), { signal: AbortSignal.timeout(12000) });
-    if (r.ok) {
-      var j = await r.json();
-      if (j.status === 'ok' && j.items && j.items.length) {
-        return j.items.slice(0,12).map(function(i){ return { title: i.title||'Untitled', link: i.link||'#', date: i.pubDate ? new Date(i.pubDate).toLocaleDateString('en-AU',{month:'short',day:'numeric'}) : '' }; });
-      }
-    }
-  } catch(e) {}
-  try {
-    var r2 = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl), { signal: AbortSignal.timeout(14000) });
-    if (r2.ok) { var j2 = await r2.json(); if (j2.contents) return parseRssXml(j2.contents); }
-  } catch(e) {}
-  try {
-    var r3 = await fetch('https://thingproxy.freeboard.io/fetch/' + rssUrl, { signal: AbortSignal.timeout(14000) });
-    if (r3.ok) { var t3 = await r3.text(); if (t3 && t3.length > 200) return parseRssXml(t3); }
-  } catch(e) {}
-  throw new Error('All proxies failed');
+document.getElementById('refresh-btn').addEventListener('click', loadAll);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/turbo-pancake/sw.js', { scope: '/turbo-pancake/' })
+    .catch(e => console.warn('SW:', e));
 }
 
-// ============================================================
-//  TALKS
-// ============================================================
-function todaySeed() {
-  var d = new Date();
-  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
-}
-function seededRand(seed) {
-  var s = seed;
-  return function() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0x100000000; };
-}
-
-function formatTalkDate(pubDate) {
-  if (!pubDate) return '';
-  try { return new Date(pubDate).toLocaleDateString('en-AU', {year:'numeric',month:'long',day:'numeric'}); } catch(e) { return ''; }
-}
-
-function renderTalk(idx) {
-  var talk = allTalks[idx];
-  if (!talk) return;
-  talkIndex = idx;
-  var body = document.getElementById('talks-body');
-  var meta = [talk.teacher, talk.dateStr, talk.durStr].filter(Boolean).join(' \u00B7 ');
-  body.innerHTML =
-    '<div class="talk-title-text">' + escHtml(talk.title) + '</div>' +
-    '<div class="talk-meta">' + escHtml(meta) + '</div>' +
-    '<audio class="talk-audio" controls preload="none" src="' + escHtml(talk.mp3) + '"></audio>' +
-    '<div class="talk-nav-row">' +
-      '<button class="talk-btn" onclick="talkPrev()">\u2190 Prev</button>' +
-      '<button class="talk-btn primary" onclick="talkRandom()">\uD83D\uDD00 Random</button>' +
-      '<button class="talk-btn" onclick="talkNext()">Next \u2192</button>' +
-      '<a class="talk-browse" href="https://www.dhammatalks.org/audio/" target="_blank" rel="noopener">Browse all \u2197</a>' +
-    '</div>';
-}
-function talkPrev()   { if (talkIndex > 0) renderTalk(talkIndex - 1); }
-function talkNext()   { if (talkIndex < allTalks.length - 1) renderTalk(talkIndex + 1); }
-function talkRandom() { renderTalk(Math.floor(Math.random() * allTalks.length)); }
-
-async function talksLoad() {
-  var body = document.getElementById('talks-body');
-  var btn  = document.getElementById('talks-refresh-btn');
-  body.innerHTML = '<div class="talk-status">&#x23F3; Loading talks&hellip;</div>';
-  if (btn) btn.classList.add('spinning');
-  allTalks = [];
-  try {
-    var r = await fetch(WORKER + '/talks');
-    if (!r.ok) throw new Error('Worker responded ' + r.status);
-    var d = await r.json();
-    if (!d.talks || !d.talks.length) throw new Error('Worker returned no talks');
-    allTalks = d.talks.map(function(t) {
-      var durStr = '';
-      if (t.duration > 0) { var m = Math.floor(t.duration / 60); var s = t.duration % 60; durStr = m + ':' + (s < 10 ? '0' : '') + s; }
-      return { title: t.title, mp3: t.mp3, dateStr: formatTalkDate(t.pubDate), teacher: t.teacher, durStr: durStr };
-    });
-    if (!allTalks.length) throw new Error('No talks available');
-    var rand = seededRand(todaySeed());
-    renderTalk(Math.floor(rand() * allTalks.length));
-  } catch(e) {
-    body.innerHTML = '<div class="talk-status err">&#x26A0;&#xFE0F; Could not load talks (' + escHtml(e.message) + '). ' +
-      '<a href="https://www.dhammatalks.org/audio/" target="_blank" style="color:var(--accent)">Open directly &#x2197;</a></div>';
-  } finally {
-    if (btn) btn.classList.remove('spinning');
-  }
-}
-
-// ============================================================
-//  ROAD TRIP
-// ============================================================
-function rtChangeFuelType(t) { RT_CONFIG.FUEL_TYPE = t; rtFetchFuel(); }
-function rtToggleCard(n)     { document.getElementById('rt-card-' + n).classList.toggle('collapsed'); }
-
-function rtInitMap() {
-  rtMap = L.map('rt-map', { zoomControl: true }).setView([rtState.lat, rtState.lon], 10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 18 }).addTo(rtMap);
-  rtUserMarker = L.circleMarker([rtState.lat, rtState.lon], { radius:9, fillColor:'#4a9eff', color:'#fff', weight:2, fillOpacity:1 }).addTo(rtMap).bindPopup('<b>&#x1F4CD; You are here</b>');
-  setTimeout(function(){ rtMap.invalidateSize(); }, 400);
-}
-function rtUpdateMapCenter() {
-  if (!rtMap) return;
-  rtMap.setView([rtState.lat, rtState.lon], 11);
-  rtUserMarker.setLatLng([rtState.lat, rtState.lon]);
-}
-function rtClearLayer(n) { rtLayers[n].forEach(function(m){ rtMap.removeLayer(m); }); rtLayers[n] = []; }
-function rtMakeIcon(emoji, color) {
-  return L.divIcon({ html: '<div style="background:'+color+';border-radius:50% 50% 50% 0;width:28px;height:28px;transform:rotate(-45deg);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.5)"><span style="transform:rotate(45deg);font-size:13px">'+emoji+'</span></div>', className:'', iconSize:[28,28], iconAnchor:[14,28], popupAnchor:[0,-30] });
-}
-
-function rtUseGPS() {
-  rtSetLocText('&#x231B; Locating&hellip;');
-  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-  navigator.geolocation.getCurrentPosition(
-    function(pos){ rtState.lat = pos.coords.latitude; rtState.lon = pos.coords.longitude; rtReverseGeocode(rtState.lat, rtState.lon); rtUpdateMapCenter(); rtRefreshAll(); },
-    function(){    rtSetLocText('GPS unavailable &mdash; using default location'); },
-    { enableHighAccuracy:true, timeout:10000 }
-  );
-}
-async function rtReverseGeocode(lat, lon) {
-  try {
-    var r = await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json');
-    var d = await r.json(), a = d.address;
-    rtState.locationName = [a.suburb||a.town||a.city, a.state_code||a.state].filter(Boolean).join(', ') || d.display_name;
-    rtSetLocText('<span class="coords">'+lat.toFixed(4)+', '+lon.toFixed(4)+'</span> &middot; '+escHtml(rtState.locationName));
-  } catch(e) {
-    rtSetLocText('<span class="coords">'+lat.toFixed(4)+', '+lon.toFixed(4)+'</span>');
-  }
-}
-function rtSetLocText(html) { document.getElementById('rt-loc-text').innerHTML = html; }
-
-async function rtSearchLocation() {
-  var q = document.getElementById('rt-location-input').value.trim();
-  if (!q) return;
-  var raw = q.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
-  if (raw) { rtState.lat = parseFloat(raw[1]); rtState.lon = parseFloat(raw[2]); rtReverseGeocode(rtState.lat, rtState.lon); rtUpdateMapCenter(); rtRefreshAll(); return; }
-  try {
-    var r = await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1&countrycodes=au');
-    var d = await r.json();
-    if (!d.length) { alert('Location not found.'); return; }
-    rtState.lat = parseFloat(d[0].lat); rtState.lon = parseFloat(d[0].lon);
-    rtState.locationName = d[0].display_name.split(',').slice(0,2).join(',').trim();
-    rtSetLocText('<span class="coords">'+rtState.lat.toFixed(4)+', '+rtState.lon.toFixed(4)+'</span> &middot; '+escHtml(rtState.locationName));
-    rtUpdateMapCenter(); rtRefreshAll();
-  } catch(e) { alert('Geocoding failed.'); }
-}
-document.getElementById('rt-location-input').addEventListener('keydown', function(e){ if(e.key==='Enter') rtSearchLocation(); });
-
-async function rtFetchWeather() {
-  var body  = document.getElementById('rt-body-weather');
-  var badge = document.getElementById('rt-badge-weather');
-  body.innerHTML = rtLoading('Fetching weather&hellip;'); rtSetBadge(badge,'load','LOADING');
-  var url = 'https://api.open-meteo.com/v1/forecast?latitude='+rtState.lat+'&longitude='+rtState.lon
-    +'&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m,uv_index'
-    +'&hourly=precipitation_probability,precipitation,temperature_2m,weather_code'
-    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max'
-    +'&timezone=auto&forecast_days='+RT_CONFIG.FORECAST_DAYS;
-  try {
-    var r = await fetch(url); if (!r.ok) throw new Error('HTTP '+r.status);
-    var d = await r.json(), cur = d.current, hourly = d.hourly, daily = d.daily;
-    var maxRain72 = Math.max.apply(null, hourly.precipitation_probability.slice(0,72));
-    rtSetBadge(badge, maxRain72>70?'warn':'ok', maxRain72>70?'RAIN '+maxRain72+'%':'CLEAR');
-    var warnings = '';
-    if (cur.uv_index >= 8)       warnings += rtWarn('&#x2600;&#xFE0F; <b>Extreme UV '+cur.uv_index+'</b> &mdash; Protect skin and eyes outdoors.');
-    if (cur.wind_speed_10m > 60) warnings += rtWarn('&#x1F4A8; <b>Strong winds '+Math.round(cur.wind_speed_10m)+' km/h</b> &mdash; Take care on exposed roads.');
-    if (maxRain72 > 80)          warnings += rtWarn('&#x1F327;&#xFE0F; <b>Heavy rain likely</b> in next 72h &mdash; Check for flood warnings before driving.');
-    var now = new Date(), si = hourly.time.findIndex(function(t){ return new Date(t) >= now; });
-    var bars = '';
-    for (var i = si; i < si+24 && i < hourly.time.length; i += 2) {
-      var prob = hourly.precipitation_probability[i]||0;
-      var hh   = new Date(hourly.time[i]).getHours().toString().padStart(2,'0')+'h';
-      var cls  = prob>70?'heavy':prob<30?'light':'';
-      bars += '<div class="rt-rain-bar-wrap" title="'+prob+'% at '+hh+'"><div class="rt-rain-bar '+cls+'" style="height:'+Math.max(4,prob)+'%"></div><div class="rt-rain-time">'+hh+'</div></div>';
-    }
-    var dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], fc = '';
-    for (var j = 1; j < Math.min(RT_CONFIG.FORECAST_DAYS, daily.time.length); j++) {
-      var dt = new Date(daily.time[j]), nm = j===1?'TMW':dn[dt.getDay()], rain = daily.precipitation_probability_max[j]||0;
-      fc += '<div class="rt-forecast-day"><div class="rt-day-name">'+nm+'</div><div class="rt-day-icon">'+rtWmoIcon(daily.weather_code[j])+'</div><div class="rt-day-desc">'+rtWmoDesc(daily.weather_code[j])+'</div><div class="rt-day-temps">'+Math.round(daily.temperature_2m_max[j])+'&deg; / '+Math.round(daily.temperature_2m_min[j])+'&deg;</div><div class="rt-day-rain">&#x1F327; '+rain+'%</div></div>';
-    }
-    body.innerHTML = warnings +
-      '<div class="rt-weather-now"><div><div class="rt-weather-temp">'+Math.round(cur.temperature_2m)+'<sup>&deg;C</sup></div><div style="color:var(--rt-text-dim);font-size:12px;margin-top:2px">Feels '+Math.round(cur.apparent_temperature)+'&deg;</div></div>' +
-      '<div><div class="rt-weather-desc">'+rtWmoIcon(cur.weather_code)+' '+rtWmoDesc(cur.weather_code)+'</div><div class="rt-weather-meta">&#x1F4A7; Humidity '+cur.relative_humidity_2m+'%<br>&#x1F4A8; Wind '+Math.round(cur.wind_speed_10m)+' km/h<br>&#x2600;&#xFE0F; UV '+cur.uv_index+'</div></div></div>' +
-      '<div class="rt-weather-stats"><div class="rt-stat-box"><div class="rt-stat-val">'+maxRain72+'%</div><div class="rt-stat-lbl">Max Rain 72h</div></div><div class="rt-stat-box"><div class="rt-stat-val" style="color:var(--rt-accent)">'+Math.round(daily.temperature_2m_max[0])+'&deg;</div><div class="rt-stat-lbl">Today High</div></div><div class="rt-stat-box"><div class="rt-stat-val" style="color:var(--rt-rain)">'+Math.round(daily.temperature_2m_min[0])+'&deg;</div><div class="rt-stat-lbl">Today Low</div></div></div>' +
-      '<div class="rt-section-title">&#x1F327; Rain probability &mdash; next 24h</div><div class="rt-rain-chart">'+bars+'</div>' +
-      '<div class="rt-section-title" style="margin-top:14px">3-DAY FORECAST</div><div class="rt-forecast-days">'+fc+'</div>' + rtTimestamp();
-    rtClearLayer('weather');
-    rtLayers.weather.push(L.marker([rtState.lat,rtState.lon],{icon:rtMakeIcon(rtWmoIcon(cur.weather_code),'#1a5c8c')}).addTo(rtMap).bindPopup('<b>'+rtWmoIcon(cur.weather_code)+' '+rtWmoDesc(cur.weather_code)+'</b><br>'+Math.round(cur.temperature_2m)+'&deg;C &middot; Rain '+maxRain72+'%'));
-  } catch(e) {
-    body.innerHTML = '<div class="rt-empty">&#x26A0;&#xFE0F; Could not load weather data.</div>';
-    rtSetBadge(badge,'err','ERROR');
-  }
-}
-function rtWmoDesc(code) { return ({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Heavy showers',82:'Violent showers',95:'Thunderstorm',96:'Thunderstorm + hail',99:'Severe thunderstorm'})[code]||'Conditions ('+code+')'; }
-function rtWmoIcon(code) { if(code===0)return'&#x2600;&#xFE0F;';if(code<=2)return'&#x26C5;';if(code===3)return'&#x2601;&#xFE0F;';if(code<=48)return'&#x1F32B;&#xFE0F;';if(code<=55)return'&#x1F326;&#xFE0F;';if(code<=65)return'&#x1F327;&#xFE0F;';if(code<=77)return'&#x2744;&#xFE0F;';if(code<=82)return'&#x1F329;&#xFE0F;';return'&#x26C8;&#xFE0F;'; }
-
-async function rtFetchTraffic() {
-  var body  = document.getElementById('rt-body-traffic');
-  var badge = document.getElementById('rt-badge-traffic');
-  body.innerHTML = rtLoading('Fetching traffic&hellip;'); rtSetBadge(badge,'load','LOADING');
-  try {
-    var r = await fetch(RT_CONFIG.WORKER_URL+'/traffic?lat='+rtState.lat+'&lon='+rtState.lon+'&radius='+RT_CONFIG.RADIUS_KM);
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    var d = await r.json(), incidents = d.incidents || [];
-    rtClearLayer('traffic');
-    if (!incidents.length) { body.innerHTML = '<div class="rt-empty">&#x2705; No traffic incidents within '+RT_CONFIG.RADIUS_KM+'km.</div>'+rtTimestamp(); rtSetBadge(badge,'ok','CLEAR'); return; }
-    rtSetBadge(badge,'warn',incidents.length+' INCIDENT'+(incidents.length>1?'S':''));
-    var html = '';
-    incidents.slice(0,10).forEach(function(inc){
-      var p=inc.properties, desc=(p.events&&p.events[0]&&p.events[0].description)||rtIncidentName(p.iconCategory);
-      var delay=p.delay?'+'+Math.round(p.delay/60)+' min delay':'', mag=p.magnitudeOfDelay||0;
-      var sevCls=mag>=3?'rt-sev-high':mag>=2?'rt-sev-med':'rt-sev-low', sevLbl=mag>=3?'MAJOR':mag>=2?'MODERATE':'MINOR';
-      var icon=rtIncidentIcon(p.iconCategory), route=[p.from,p.to].filter(Boolean).join(' \u2192 ');
-      html+='<div class="rt-incident"><div class="rt-incident-icon">'+icon+'</div><div><div class="rt-incident-title">'+escHtml(desc)+'<span class="rt-sev-tag '+sevCls+'">'+sevLbl+'</span></div><div class="rt-incident-meta">'+escHtml(route)+(delay?'<br>'+escHtml(delay):'')+'</div></div></div>';
-      var coords=inc.geometry&&inc.geometry.type==='Point'?inc.geometry.coordinates:(inc.geometry&&inc.geometry.coordinates&&inc.geometry.coordinates[0]);
-      if(coords&&coords.length>=2) rtLayers.traffic.push(L.marker([coords[1],coords[0]],{icon:rtMakeIcon(icon,'#6b1212')}).addTo(rtMap).bindPopup('<b>'+icon+' '+escHtml(desc)+'</b>'+(route?'<br>'+escHtml(route):'')+(delay?'<br>'+escHtml(delay):'')));
-    });
-    body.innerHTML = html + rtTimestamp();
-  } catch(e) {
-    body.innerHTML = '<div class="rt-empty">&#x26A0;&#xFE0F; Traffic data unavailable.</div>';
-    rtSetBadge(badge,'err','ERROR');
-  }
-}
-function rtIncidentIcon(c) { return({1:'&#x1F6A7;',2:'&#x26A0;&#xFE0F;',3:'&#x1F697;',4:'&#x26FD;',5:'&#x1F327;&#xFE0F;',6:'&#x1F6A8;',7:'&#x26F0;&#xFE0F;',8:'&#x26A0;&#xFE0F;',9:'&#x1F6AB;',10:'&#x1F6AB;',11:'&#x1F32B;&#xFE0F;'})[c]||'&#x26A0;&#xFE0F;'; }
-function rtIncidentName(c) { return({1:'Road works',2:'Accident',3:'Congestion',4:'Fuel hazard',5:'Weather hazard',6:'Emergency',7:'Road blocked',8:'Hazard',9:'Lane closure',10:'Restriction',11:'Poor visibility'})[c]||'Incident'; }
-
-var RT_OVERPASS = ['https://overpass.kumi.systems/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass-api.de/api/interpreter'];
-async function rtFetchOverpass(q) {
-  for (var i=0; i<RT_OVERPASS.length; i++) {
-    try { var r = await fetch(RT_OVERPASS[i],{method:'POST',body:'data='+encodeURIComponent(q),signal:AbortSignal.timeout(20000)}); if(r.ok) return r; } catch(e){}
-  }
-  throw new Error('All Overpass mirrors failed');
-}
-
-async function rtFetchFuel() {
-  var body  = document.getElementById('rt-body-fuel');
-  var badge = document.getElementById('rt-badge-fuel');
-  body.innerHTML = rtLoading('Fetching fuel prices&hellip;'); rtSetBadge(badge,'load','LOADING');
-  try {
-    var r = await fetch(RT_CONFIG.WORKER_URL+'/fuel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:rtState.lat,lon:rtState.lon,radius:RT_CONFIG.RADIUS_KM,fueltype:RT_CONFIG.FUEL_TYPE})});
-    if(!r.ok) throw new Error(r.status);
-    var d = await r.json(), priceMap = {};
-    (d.prices||[]).forEach(function(p){ priceMap[p.stationcode||p.Stationcode||p.StationCode]=p.price||p.Price||0; });
-    var stations=(d.stations||[]).map(function(s){ var code=s.stationcode||s.Stationcode||s.StationCode||s.code||s.Code; return{name:s.name||s.Name||s.stationname||s.StationName||'Service Station',brand:s.brand||s.Brand||'',address:s.address||s.Address||'',price:priceMap[code]||0,lat:s.lat||s.Lat||s.latitude||s.Latitude,lng:s.lng||s.Lng||s.longitude||s.Longitude,distance:(s.distance||s.Distance||0)*1000}; });
-    rtRenderFuelStations(stations,body,badge); return;
-  } catch(e) { body.innerHTML = rtLoading('Live prices unavailable, trying OSM fallback&hellip;'); }
-  try {
-    var q = '[out:json][timeout:25];(node["amenity"="fuel"](around:'+RT_CONFIG.RADIUS_KM*1000+','+rtState.lat+','+rtState.lon+');way["amenity"="fuel"](around:'+RT_CONFIG.RADIUS_KM*1000+','+rtState.lat+','+rtState.lon+'););out center 30;';
-    var osmR = await rtFetchOverpass(q), osmD = await osmR.json();
-    var stations2=(osmD.elements||[]).map(function(el){ var t=el.tags||{},lat=el.lat||(el.center&&el.center.lat),lng=el.lon||(el.center&&el.center.lon); return{name:t.name||t.brand||t.operator||'Service Station',brand:t.brand||'',address:[t['addr:housenumber'],t['addr:street'],t['addr:suburb']].filter(Boolean).join(' ')||'',price:0,lat:lat,lng:lng,distance:lat&&lng?rtHaversine(rtState.lat,rtState.lon,lat,lng):999999}; }).filter(function(s){ return s.lat&&s.lng; }).sort(function(a,b){ return a.distance-b.distance; });
-    rtRenderFuelStations(stations2,body,badge,true);
-  } catch(e) {
-    body.innerHTML = '<div class="rt-empty">&#x26A0;&#xFE0F; Fuel data unavailable.</div>';
-    rtSetBadge(badge,'err','ERROR');
-  }
-}
-function rtRenderFuelStations(stations,body,badge,noPrices) {
-  rtClearLayer('fuel');
-  if(!stations.length){ body.innerHTML='<div class="rt-empty">No fuel stations found within '+RT_CONFIG.RADIUS_KM+'km.</div>'; rtSetBadge(badge,'warn','NONE'); return; }
-  var prices=stations.map(function(s){return s.price;}).filter(function(p){return p>0;}), hasPrices=prices.length>0;
-  var minPrice=hasPrices?Math.min.apply(null,prices):0, maxPrice=hasPrices?Math.max.apply(null,prices):0;
-  var html='';
-  stations.slice(0,10).forEach(function(s){
-    var dist=s.distance<999999?(s.distance/1000).toFixed(1)+' km':'';
-    var priceCls=(!hasPrices||s.price===0)?'':s.price>=maxPrice*0.98?'expensive':s.price<=minPrice*1.02?'':'mid';
-    var priceStr=s.price>0?s.price.toFixed(1)+'&cent;':'&ndash;';
-    html+='<div class="rt-fuel-item"><div class="rt-fuel-price '+priceCls+'">'+priceStr+'</div><div style="flex:1"><div class="rt-fuel-name">'+escHtml(s.name)+(s.brand&&s.brand!==s.name?' &middot; '+escHtml(s.brand):'')+'</div><div class="rt-fuel-meta">'+escHtml(s.address||'Nearby station')+'</div></div><div class="rt-fuel-dist">'+dist+'</div></div>';
-    if(s.lat&&s.lng) rtLayers.fuel.push(L.marker([s.lat,s.lng],{icon:rtMakeIcon('&#x26FD;','#7a5200')}).addTo(rtMap).bindPopup('<b>&#x26FD; '+escHtml(s.name)+'</b>'+(s.price>0?'<br>'+RT_CONFIG.FUEL_TYPE+': '+s.price.toFixed(1)+'&cent;/L':'')+'<br>'+escHtml(s.address||'')+(dist?'<br>'+dist+' away':'')));
-  });
-  if(noPrices) html+='<div class="rt-api-notice">&#x1F4A1; <b>Live prices unavailable</b> &mdash; add your FuelCheck API key to the Worker for real-time pricing.</div>';
-  body.innerHTML=html+rtTimestamp();
-  rtSetBadge(badge,hasPrices?'ok':'warn',hasPrices?minPrice.toFixed(1)+'&cent;':stations.length+' NEAR');
-}
-
-async function rtFetchCamping() {
-  var body  = document.getElementById('rt-body-camping');
-  var badge = document.getElementById('rt-badge-camping');
-  body.innerHTML = rtLoading('Searching nearby campsites&hellip;'); rtSetBadge(badge,'load','LOADING');
-  var rm = RT_CONFIG.RADIUS_KM*1000;
-  var query='[out:json][timeout:30];(node["tourism"="camp_site"](around:'+rm+','+rtState.lat+','+rtState.lon+');node["tourism"="caravan_site"](around:'+rm+','+rtState.lat+','+rtState.lon+');node["amenity"="camping"](around:'+rm+','+rtState.lat+','+rtState.lon+');node["highway"="rest_area"](around:'+rm+','+rtState.lat+','+rtState.lon+');node["amenity"="rest_area"](around:'+rm+','+rtState.lat+','+rtState.lon+');node["amenity"="picnic_site"](around:'+rm+','+rtState.lat+','+rtState.lon+');way["tourism"="camp_site"](around:'+rm+','+rtState.lat+','+rtState.lon+');way["tourism"="caravan_site"](around:'+rm+','+rtState.lat+','+rtState.lon+'););out center 30;';
-  try {
-    var r = await rtFetchOverpass(query); if(!r.ok) throw new Error('HTTP '+r.status);
-    var d = await r.json(), els = d.elements||[];
-    rtClearLayer('camping');
-    if(!els.length){ body.innerHTML='<div class="rt-empty">No campsites found within '+RT_CONFIG.RADIUS_KM+'km.</div>'; rtSetBadge(badge,'warn','NONE'); return; }
-    els.forEach(function(el){ var lat=el.lat||(el.center&&el.center.lat),lon2=el.lon||(el.center&&el.center.lon); el._dist=(lat&&lon2)?rtHaversine(rtState.lat,rtState.lon,lat,lon2):999999; });
-    els.sort(function(a,b){return a._dist-b._dist;});
-    rtSetBadge(badge,'ok',els.length+' FOUND');
-    var html='';
-    els.slice(0,15).forEach(function(el){
-      var t=el.tags||{}, lat=el.lat||(el.center&&el.center.lat), lon2=el.lon||(el.center&&el.center.lon);
-      var name=t.name||rtCampTypeName(t), dist=el._dist<1000?Math.round(el._dist)+'m':(el._dist/1000).toFixed(1)+'km', icon=rtCampIcon(t);
-      var tags=[];
-      if(t.fee==='no'||t.fee==='free')tags.push('&#x2705; Free');else if(t.fee==='yes')tags.push('&#x1F4B0; Paid');
-      if(t.drinking_water==='yes')tags.push('&#x1F4A7; Water');
-      if(t.toilets==='yes')tags.push('&#x1F6BD; Toilets');
-      if(t.shower==='yes')tags.push('&#x1F6BF; Showers');
-      if(t.power_supply==='yes'||t.electricity==='yes')tags.push('&#x26A1; Power');
-      if(t.dog==='yes')tags.push('&#x1F415; Dogs OK');
-      if(t.caravan==='yes'||t.motorhome==='yes')tags.push('&#x1F690; Vans OK');
-      if(t.website)tags.push('<a href="'+escHtml(t.website)+'" target="_blank" style="color:var(--rt-accent);text-decoration:none">&#x1F517; Website</a>');
-      html+='<div class="rt-camp-item"><div class="rt-camp-icon">'+icon+'</div><div style="flex:1"><div class="rt-camp-name">'+escHtml(name)+'</div><div class="rt-camp-meta">'+dist+' away'+(t.operator?' &middot; '+escHtml(t.operator):'')+'</div>'+(tags.length?'<div class="rt-camp-tags">'+tags.map(function(tg){return'<span class="rt-tag">'+tg+'</span>';}).join('')+'</div>':'')+'</div></div>';
-      if(lat&&lon2) rtLayers.camping.push(L.marker([lat,lon2],{icon:rtMakeIcon(icon,'#1a4d2e')}).addTo(rtMap).bindPopup('<b>'+icon+' '+escHtml(name)+'</b><br>'+dist+' away'));
-    });
-    body.innerHTML=html+'<div class="rt-last-updated">Data: OpenStreetMap &middot; '+new Date().toLocaleTimeString()+'</div>';
-  } catch(e) {
-    body.innerHTML = '<div class="rt-empty">&#x26A0;&#xFE0F; Camping data unavailable. Try refreshing.</div>';
-    rtSetBadge(badge,'err','ERROR');
-  }
-}
-function rtCampTypeName(t) { if(t.tourism==='caravan_site')return'Caravan Park';if(t.amenity==='picnic_site')return'Picnic Area';if(t.highway==='rest_area'||t.amenity==='rest_area')return'Rest Area';return'Campsite'; }
-function rtCampIcon(t) { if(t.amenity==='picnic_site')return'&#x1F9FA;';if(t.highway==='rest_area'||t.amenity==='rest_area')return'&#x1F6D1;';if(t.tourism==='caravan_site')return'&#x1F690;';return'&#x1F3D5;&#xFE0F;'; }
-function rtHaversine(a,b,c,e){var R=6371000,dL=(c-a)*Math.PI/180,dO=(e-b)*Math.PI/180,f=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dO/2)*Math.sin(dO/2);return R*2*Math.atan2(Math.sqrt(f),Math.sqrt(1-f));}
-function rtSetBadge(el,type,text){el.className='rt-badge rt-badge-'+type;el.textContent=text;}
-function rtLoading(msg){return'<div class="rt-loading"><div class="rt-spinner"></div> '+msg+'</div>';}
-function rtWarn(msg){return'<div class="rt-warning-box">&#x26A0;&#xFE0F; <span>'+msg+'</span></div>';}
-function rtTimestamp(){return'<div class="rt-last-updated">Updated '+new Date().toLocaleTimeString()+'</div>';}
-function rtRefreshAll(){rtFetchWeather();rtFetchTraffic();rtFetchFuel();rtFetchCamping();}
-
-function rtBoot() {
-  var sel = document.getElementById('rt-fuel-type-select');
-  if(sel) sel.value = RT_CONFIG.FUEL_TYPE;
-  if(navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(pos){ rtState.lat=pos.coords.latitude; rtState.lon=pos.coords.longitude; rtReverseGeocode(rtState.lat,rtState.lon); rtUpdateMapCenter(); rtRefreshAll(); },
-      function(){    rtSetLocText('<span class="coords">'+rtState.lat+', '+rtState.lon+'</span> &middot; '+escHtml(rtState.locationName)+' (default)'); rtRefreshAll(); },
-      {enableHighAccuracy:true,timeout:8000}
-    );
-  } else {
-    rtSetLocText(escHtml(rtState.locationName)+' (GPS not supported)');
-    rtRefreshAll();
-  }
-}
+loadAll();
 </script>
 </body>
 </html>
